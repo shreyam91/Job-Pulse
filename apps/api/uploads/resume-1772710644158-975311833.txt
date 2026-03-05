@@ -1,0 +1,4 @@
+John Doe
+Software Engineer
+Skills: Python, TypeScript, React, Node.js, AWS
+5 years experience

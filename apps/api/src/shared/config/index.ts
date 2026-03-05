@@ -1,7 +1,15 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+// Try multiple paths to find .env
+const envPaths = [
+    path.join(process.cwd(), '.env'),
+    path.join(__dirname, '../../../.env'),
+    path.join(__dirname, '../../.env'),
+];
+const envPath = envPaths.find(p => fs.existsSync(p)) || envPaths[0];
+dotenv.config({ path: envPath });
 
 const config = {
     env: process.env.NODE_ENV || 'development',
@@ -15,6 +23,7 @@ const config = {
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379', 10),
         password: process.env.REDIS_PASSWORD || undefined,
+        tls: process.env.REDIS_TLS === 'true',
     },
 
     gemini: {

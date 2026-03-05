@@ -81,13 +81,30 @@ export const jobsController = {
 
         const analysis = await jobsService.getAnalysis(req.params.id, resumeId as string);
         if (!analysis) {
-            // Enqueue if not analysed
-            await enqueueAIMatch(req.params.id, resumeId as string);
-            res.status(202).json({
-                success: true,
-                message: 'Analysis queued. Please retry in a moment.',
-                data: null,
-            });
+            // Run directly instead of queuing (Redis-free fallback)
+            try {
+                const job = await jobsService.getJobById(req.params.id);
+                const resume = await resumeService.getResumeById(resumeId as string);
+                if (!job || !resume) {
+                    res.status(202).json({ success: true, message: 'Analysis pending. Resume or job not found.', data: null });
+                    return;
+                }
+                const newAnalysis = await aiMatchService.buildFullAnalysis(
+                    req.params.id,
+                    resumeId as string,
+                    job,
+                    resume.parsedData
+                );
+                await jobsService.upsertAnalysis(newAnalysis);
+                res.json({ success: true, data: newAnalysis });
+            } catch {
+                await enqueueAIMatch(req.params.id, resumeId as string).catch(() => { });
+                res.status(202).json({
+                    success: true,
+                    message: 'Analysis queued. Please retry in a moment.',
+                    data: null,
+                });
+            }
             return;
         }
 
@@ -101,20 +118,117 @@ export const jobsController = {
         const { resumeId } = req.body;
         if (!resumeId) throw createError('resumeId is required', 400);
 
-        await enqueueAIMatch(req.params.id, resumeId);
+        const job = await jobsService.getJobById(req.params.id);
+        if (!job) throw createError('Job not found', 404);
 
-        res.status(202).json({
-            success: true,
-            message: 'AI analysis queued successfully',
-        });
+        const resume = await resumeService.getResumeById(resumeId);
+        if (!resume) throw createError('Resume not found', 404);
+
+        try {
+            // Try to queue (Redis optional)
+            await enqueueAIMatch(req.params.id, resumeId);
+            res.status(202).json({
+                success: true,
+                message: 'AI analysis queued successfully',
+            });
+        } catch {
+            // Redis unavailable — run synchronously
+            try {
+                const analysis = await aiMatchService.buildFullAnalysis(
+                    req.params.id,
+                    resumeId,
+                    job,
+                    resume.parsedData
+                );
+                await jobsService.upsertAnalysis(analysis);
+                res.json({ success: true, message: 'AI analysis completed', data: analysis });
+            } catch (err: any) {
+                logger.error('[TriggerAnalysis] Direct AI analysis failed:', err.message);
+                res.status(500).json({ success: false, message: 'AI analysis failed', error: err.message });
+            }
+        }
     }),
 
     /**
-     * POST /api/jobs/refresh — Trigger scraper run
+     * POST /api/jobs/refresh — Trigger scraper run (direct, no Redis needed)
      */
-    refreshJobs: asyncHandler(async (_req: Request, res: Response) => {
-        await enqueueScraperRun();
-        res.json({ success: true, message: 'Job scraping queued' });
+    refreshJobs: asyncHandler(async (req: Request, res: Response) => {
+        const { scraperService } = await import('../../modules/scraper/scraper.service');
+
+        logger.info('[RefreshJobs] Starting direct scraper run...');
+        let stored = 0;
+        let skipped = 0;
+
+        try {
+            const rawJobs = await scraperService.scrapeAll();
+            logger.info(`[RefreshJobs] Scraped ${rawJobs.length} raw jobs`);
+
+            for (const rawJob of rawJobs) {
+                try {
+                    await jobsService.upsertJob({
+                        title: rawJob.title,
+                        company: rawJob.company,
+                        location: rawJob.location,
+                        workMode: rawJob.workMode,
+                        skills: rawJob.skills,
+                        tags: rawJob.tags,
+                        description: rawJob.description,
+                        source: rawJob.source,
+                        sourceUrl: rawJob.sourceUrl,
+                        postedAt: rawJob.postedAt,
+                        hasFunding: rawJob.hasFunding,
+                        employeeCount: rawJob.employeeCount,
+                        salary: rawJob.salary,
+                        experienceYears: rawJob.experienceYears,
+                    });
+                    stored++;
+                } catch (err: any) {
+                    if (err.code === 11000) skipped++;
+                    else logger.warn(`[RefreshJobs] Failed to store job:`, err.message);
+                }
+            }
+
+            await scraperService.closeBrowser();
+        } catch (error: any) {
+            logger.error('[RefreshJobs] Scraper failed:', error.message);
+            // Even if scraper fails, return what we have
+        }
+
+        // Trigger AI analysis for all unanalysed jobs if a resume exists
+        const userId = req.body.userId || req.headers['x-user-id'] || 'default-user';
+        const resume = await resumeService.getActiveResume(userId as string);
+        if (resume) {
+            try {
+                const allJobs = await jobsService.getJobs({ page: 1, limit: 50 });
+                let analysed = 0;
+                for (const job of allJobs.jobs) {
+                    const existing = await jobsService.getAnalysis(job._id!.toString(), resume._id!.toString());
+                    if (!existing) {
+                        try {
+                            const analysis = await aiMatchService.buildFullAnalysis(
+                                job._id!.toString(),
+                                resume._id!.toString(),
+                                job,
+                                resume.parsedData
+                            );
+                            await jobsService.upsertAnalysis(analysis);
+                            analysed++;
+                        } catch (err: any) {
+                            logger.warn(`[RefreshJobs] AI analysis failed for job ${job._id}:`, err.message);
+                        }
+                    }
+                }
+                logger.info(`[RefreshJobs] AI analysis completed for ${analysed} new jobs`);
+            } catch (err: any) {
+                logger.warn('[RefreshJobs] AI analysis pass failed:', err.message);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Scraping complete. Stored: ${stored}, Skipped: ${skipped}`,
+            data: { stored, skipped },
+        });
     }),
 
     /**

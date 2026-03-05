@@ -76,7 +76,7 @@ export class AIMatchService {
 
     constructor() {
         this.genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-        this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     }
 
     /**
@@ -220,12 +220,22 @@ Do NOT use markdown code blocks. Return only raw JSON.
             companyQuality,
         });
 
+        // Final clamp — ensure AI never returns out-of-range values that fail DB validation
+        const clamp = (n: number) => Math.min(100, Math.max(0, Math.round(n)));
+        aiResult.matchScore = clamp(aiResult.matchScore);
+        aiResult.atsScore = clamp(aiResult.atsScore);
+        aiResult.matchBreakdown.skillsAlignment = clamp(aiResult.matchBreakdown.skillsAlignment);
+        aiResult.matchBreakdown.experienceFit = clamp(aiResult.matchBreakdown.experienceFit);
+        aiResult.matchBreakdown.techStackMatch = clamp(aiResult.matchBreakdown.techStackMatch);
+        aiResult.matchBreakdown.roleRelevance = clamp(aiResult.matchBreakdown.roleRelevance);
+
         return {
             jobId,
             resumeId,
             ...aiResult,
             finalScore,
         };
+
     }
 }
 

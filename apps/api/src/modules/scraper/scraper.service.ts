@@ -1,10 +1,5 @@
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import type { Browser, Page } from 'puppeteer';
+import https from 'https';
 import logger from '../../shared/logger';
-import { sleep } from '../../shared/utils';
-
-puppeteer.use(StealthPlugin());
 
 export interface RawJob {
     title: string;
@@ -15,7 +10,7 @@ export interface RawJob {
     tags: string[];
     description: string;
     sourceUrl: string;
-    source: 'wellfound' | 'ycombinator' | 'greenhouse' | 'lever';
+    source: 'greenhouse' | 'lever';
     postedAt: Date;
     salary?: { min?: number; max?: number; currency?: string };
     experienceYears?: { min?: number; max?: number };
@@ -23,319 +18,196 @@ export interface RawJob {
     employeeCount?: number;
 }
 
-export class ScraperService {
-    private browser: Browser | null = null;
-
-    async getBrowser(): Promise<Browser> {
-        if (!this.browser || !this.browser.connected) {
-            this.browser = await (puppeteer as any).launch({
-                headless: true,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--disable-gpu',
-                ],
+// ─── HTTP helpers ─────────────────────────────────────────────────────────────
+function fetchJson<T = any>(url: string): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const req = https.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                Accept: 'application/json',
+            },
+        }, (res) => {
+            let data = '';
+            res.on('data', (chunk) => (data += chunk));
+            res.on('end', () => {
+                try {
+                    resolve(JSON.parse(data) as T);
+                } catch {
+                    reject(new Error(`Failed to parse JSON from ${url}`));
+                }
             });
-        }
-        return this.browser;
-    }
-
-    async closeBrowser(): Promise<void> {
-        if (this.browser) {
-            await this.browser.close();
-            this.browser = null;
-        }
-    }
-
-    async newPage(): Promise<Page> {
-        const browser = await this.getBrowser();
-        const page = await browser.newPage();
-
-        await page.setUserAgent(
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        );
-        await page.setViewport({ width: 1280, height: 800 });
-        await page.setRequestInterception(true);
-
-        page.on('request', (req) => {
-            const resourceType = req.resourceType();
-            if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
-                req.abort();
-            } else {
-                req.continue();
-            }
         });
+        req.on('error', reject);
+        req.setTimeout(20000, () => {
+            req.destroy();
+            reject(new Error(`Request timeout: ${url}`));
+        });
+    });
+}
 
-        return page;
-    }
+function stripHtml(html: string): string {
+    return html
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 2000);
+}
 
-    /**
-     * Scrape Y Combinator Jobs (jobs.ycombinator.com)
-     */
-    async scrapeYCombinator(): Promise<RawJob[]> {
-        const jobs: RawJob[] = [];
-        let page: Page | null = null;
+export class ScraperService {
 
-        try {
-            page = await this.newPage();
-            logger.info('Scraping YCombinator jobs...');
-
-            await page.goto('https://www.ycombinator.com/jobs', {
-                waitUntil: 'networkidle2',
-                timeout: 30000,
-            });
-
-            await sleep(2000);
-
-            const jobCards = await page.$$eval('.job', (cards) =>
-                cards.slice(0, 30).map((card) => {
-                    const title = card.querySelector('.job-name')?.textContent?.trim() || '';
-                    const company = card.querySelector('.company-name')?.textContent?.trim() || '';
-                    const location = card.querySelector('.job-location')?.textContent?.trim() || 'Remote';
-                    const url = (card as HTMLAnchorElement).href || card.querySelector('a')?.href || '';
-                    const tags = Array.from(card.querySelectorAll('.tag')).map((t) => t.textContent?.trim() || '');
-
-                    return { title, company, location, url, tags };
-                })
-            );
-
-            for (const card of jobCards) {
-                if (!card.title || !card.url) continue;
-
-                const workMode = this.inferWorkMode(card.location);
-
-                jobs.push({
-                    title: card.title,
-                    company: card.company || 'Unknown',
-                    location: card.location,
-                    workMode,
-                    skills: card.tags,
-                    tags: card.tags,
-                    description: `${card.title} position at ${card.company}. Location: ${card.location}. Apply via Y Combinator.`,
-                    sourceUrl: card.url,
-                    source: 'ycombinator',
-                    postedAt: new Date(),
-                    hasFunding: true,
-                });
-            }
-
-            logger.info(`YCombinator: scraped ${jobs.length} jobs`);
-        } catch (error) {
-            logger.error('YCombinator scrape failed:', error);
-        } finally {
-            if (page) await page.close();
-        }
-
-        return jobs;
-    }
-
-    /**
-     * Scrape Wellfound (formerly AngelList Talent)
-     */
-    async scrapeWellfound(): Promise<RawJob[]> {
-        const jobs: RawJob[] = [];
-        let page: Page | null = null;
-
-        try {
-            page = await this.newPage();
-            logger.info('Scraping Wellfound jobs...');
-
-            await page.goto('https://wellfound.com/jobs', {
-                waitUntil: 'networkidle2',
-                timeout: 30000,
-            });
-
-            await sleep(3000);
-
-            // Scroll to load more
-            await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-            await sleep(2000);
-
-            const jobData = await page.$$eval('[data-test="StartupResult"]', (cards) =>
-                cards.slice(0, 25).map((card) => {
-                    const title = card.querySelector('a[data-test="job-title"]')?.textContent?.trim() || '';
-                    const company = card.querySelector('[data-test="startup-name"]')?.textContent?.trim() || '';
-                    const location = card.querySelector('[data-test="location"]')?.textContent?.trim() || 'Remote';
-                    const url = card.querySelector('a[data-test="job-title"]')
-                        ? `https://wellfound.com${card.querySelector('a[data-test="job-title"]')?.getAttribute('href') || ''}` : '';
-                    const skills = Array.from(card.querySelectorAll('[data-test="skill"]')).map((s) => s.textContent?.trim() || '');
-                    const compensation = card.querySelector('[data-test="comp"]')?.textContent?.trim() || '';
-
-                    return { title, company, location, url, skills, compensation };
-                })
-            );
-
-            for (const item of jobData) {
-                if (!item.title || !item.url) continue;
-
-                jobs.push({
-                    title: item.title,
-                    company: item.company,
-                    location: item.location,
-                    workMode: this.inferWorkMode(item.location),
-                    skills: item.skills,
-                    tags: item.skills,
-                    description: `${item.title} at ${item.company}. ${item.compensation}. Apply via Wellfound.`,
-                    sourceUrl: item.url,
-                    source: 'wellfound',
-                    postedAt: new Date(),
-                    hasFunding: true,
-                });
-            }
-
-            logger.info(`Wellfound: scraped ${jobs.length} jobs`);
-        } catch (error) {
-            logger.error('Wellfound scrape failed:', error);
-        } finally {
-            if (page) await page.close();
-        }
-
-        return jobs;
-    }
-
-    /**
-     * Scrape a Greenhouse board
-     */
-    async scrapeGreenhouseBoard(companySlug: string): Promise<RawJob[]> {
-        const jobs: RawJob[] = [];
-        let page: Page | null = null;
-
-        try {
-            page = await this.newPage();
-            const url = `https://boards.greenhouse.io/${companySlug}`;
-            logger.info(`Scraping Greenhouse board: ${companySlug}`);
-
-            await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-            await sleep(2000);
-
-            const jobItems = await page.$$eval('.opening', (items) =>
-                items.slice(0, 20).map((item) => {
-                    const anchor = item.querySelector('a');
-                    const title = anchor?.textContent?.trim() || '';
-                    const dept = item.closest('section')?.querySelector('.department')?.textContent?.trim() || '';
-                    const location = item.querySelector('.location')?.textContent?.trim() || '';
-                    const href = anchor?.href || '';
-                    return { title, dept, location, href };
-                })
-            );
-
-            for (const item of jobItems) {
-                if (!item.title || !item.href) continue;
-
-                jobs.push({
-                    title: item.title,
-                    company: companySlug,
-                    location: item.location || 'Remote',
-                    workMode: this.inferWorkMode(item.location),
-                    skills: [],
-                    tags: [item.dept].filter(Boolean),
-                    description: `${item.title} opening at ${companySlug} (${item.dept}). Apply via Greenhouse.`,
-                    sourceUrl: item.href,
-                    source: 'greenhouse',
-                    postedAt: new Date(),
-                });
-            }
-
-            logger.info(`Greenhouse ${companySlug}: scraped ${jobs.length} jobs`);
-        } catch (error) {
-            logger.error(`Greenhouse ${companySlug} scrape failed:`, error);
-        } finally {
-            if (page) await page.close();
-        }
-
-        return jobs;
-    }
-
-    /**
-     * Scrape a Lever board
-     */
-    async scrapeLeverBoard(companySlug: string): Promise<RawJob[]> {
-        const jobs: RawJob[] = [];
-        let page: Page | null = null;
-
-        try {
-            page = await this.newPage();
-            const url = `https://jobs.lever.co/${companySlug}`;
-            logger.info(`Scraping Lever board: ${companySlug}`);
-
-            await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-            await sleep(2000);
-
-            const jobItems = await page.$$eval('.posting', (items) =>
-                items.slice(0, 20).map((item) => {
-                    const anchor = item.querySelector('a.posting-title');
-                    const title = item.querySelector('h5')?.textContent?.trim() || '';
-                    const location = item.querySelector('.posting-categories .sort-by-location')?.textContent?.trim() || '';
-                    const team = item.querySelector('.posting-categories .sort-by-team')?.textContent?.trim() || '';
-                    const href = anchor?.href || '';
-                    return { title, location, team, href };
-                })
-            );
-
-            for (const item of jobItems) {
-                if (!item.title || !item.href) continue;
-
-                jobs.push({
-                    title: item.title,
-                    company: companySlug,
-                    location: item.location || 'Remote',
-                    workMode: this.inferWorkMode(item.location),
-                    skills: [],
-                    tags: [item.team].filter(Boolean),
-                    description: `${item.title} at ${companySlug} (${item.team}). Apply via Lever.`,
-                    sourceUrl: item.href,
-                    source: 'lever',
-                    postedAt: new Date(),
-                });
-            }
-
-            logger.info(`Lever ${companySlug}: scraped ${jobs.length} jobs`);
-        } catch (error) {
-            logger.error(`Lever ${companySlug} scrape failed:`, error);
-        } finally {
-            if (page) await page.close();
-        }
-
-        return jobs;
-    }
-
-    /**
-     * Infer work mode from location string
-     */
     private inferWorkMode(location: string): 'remote' | 'hybrid' | 'onsite' {
-        const lower = location.toLowerCase();
+        const lower = (location || '').toLowerCase();
         if (lower.includes('remote')) return 'remote';
         if (lower.includes('hybrid')) return 'hybrid';
         return 'onsite';
     }
 
+    private extractTechSkills(text: string): string[] {
+        const techKeywords = [
+            'python', 'typescript', 'javascript', 'react', 'node', 'go', 'rust', 'java',
+            'c++', 'kotlin', 'swift', 'sql', 'nosql', 'postgres', 'mongodb', 'redis',
+            'aws', 'gcp', 'azure', 'kubernetes', 'docker', 'terraform', 'ml', 'ai',
+            'llm', 'pytorch', 'tensorflow', 'spark', 'kafka', 'graphql', 'rest',
+        ];
+        const lower = text.toLowerCase();
+        return techKeywords.filter((kw) => lower.includes(kw));
+    }
+
+    // ─── Greenhouse API ────────────────────────────────────────────────────────
+    async scrapeGreenhouseCompany(slug: string, displayName?: string): Promise<RawJob[]> {
+        const jobs: RawJob[] = [];
+        const company = displayName || slug;
+
+        try {
+            logger.info(`[Greenhouse] Fetching ${slug}...`);
+            const data = await fetchJson<{ jobs: any[]; meta: { total: number } }>(
+                `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs?content=true`
+            );
+
+            const jobList = Array.isArray(data.jobs) ? data.jobs : [];
+            for (const j of jobList.slice(0, 40)) {
+                const description = stripHtml(j.content || j.title || '');
+                const location = j.location?.name || 'Unknown';
+
+                jobs.push({
+                    title: (j.title || '').trim(),
+                    company,
+                    location,
+                    workMode: this.inferWorkMode(location),
+                    skills: this.extractTechSkills(description),
+                    tags: (j.departments || []).map((d: any) => d.name).filter(Boolean),
+                    description: description || `${j.title} at ${company}. Apply via Greenhouse.`,
+                    sourceUrl: j.absolute_url || `https://boards.greenhouse.io/${slug}`,
+                    source: 'greenhouse',
+                    postedAt: j.updated_at ? new Date(j.updated_at) : new Date(),
+                });
+            }
+
+            logger.info(`[Greenhouse] ${slug}: ${jobs.length} jobs fetched`);
+        } catch (err: any) {
+            logger.error(`[Greenhouse] ${slug} failed: ${err.message}`);
+        }
+
+        return jobs;
+    }
+
+    // ─── Lever API ────────────────────────────────────────────────────────────
+    async scrapeLeverCompany(slug: string, displayName?: string): Promise<RawJob[]> {
+        const jobs: RawJob[] = [];
+        const company = displayName || slug;
+
+        try {
+            logger.info(`[Lever] Fetching ${slug}...`);
+            const data = await fetchJson<any[]>(
+                `https://api.lever.co/v0/postings/${slug}?mode=json&limit=50`
+            );
+
+            if (!Array.isArray(data)) return jobs;
+
+            for (const j of data.slice(0, 30)) {
+                const description = stripHtml(
+                    (j.descriptionPlain || j.description || j.additional || j.text || '')
+                );
+                const location =
+                    j.categories?.location || j.workplaceType || 'Unknown';
+
+                jobs.push({
+                    title: (j.text || '').trim(),
+                    company,
+                    location,
+                    workMode: this.inferWorkMode(location),
+                    skills: this.extractTechSkills(description),
+                    tags: [j.categories?.team, j.categories?.department].filter(Boolean) as string[],
+                    description: description || `${j.text} at ${company}. Apply via Lever.`,
+                    sourceUrl: j.hostedUrl || j.applyUrl || `https://jobs.lever.co/${slug}`,
+                    source: 'lever',
+                    postedAt: j.createdAt ? new Date(j.createdAt) : new Date(),
+                });
+            }
+
+            logger.info(`[Lever] ${slug}: ${jobs.length} jobs fetched`);
+        } catch (err: any) {
+            logger.error(`[Lever] ${slug} failed: ${err.message}`);
+        }
+
+        return jobs;
+    }
+
+
     /**
      * Run all scrapers and return combined results
      */
     async scrapeAll(): Promise<RawJob[]> {
-        const GREENHOUSE_COMPANIES = ['stripe', 'figma', 'notion', 'airtable', 'vercel'];
-        const LEVER_COMPANIES = ['linear', 'loom', 'retool', 'runway'];
+        // Companies on Greenhouse with working public boards
+        const GREENHOUSE_COMPANIES: Array<[string, string]> = [
+            ['stripe', 'Stripe'],
+            ['figma', 'Figma'],
+            ['airtable', 'Airtable'],
+            ['vercel', 'Vercel'],
+            ['anthropic', 'Anthropic'],
+            ['databricks', 'Databricks'],
+            ['deepmind', 'DeepMind'],
+            ['brex', 'Brex'],
+            ['plaid', 'Plaid'],
+        ];
 
-        const [ycJobs, wfJobs, ghJobs, lvJobs] = await Promise.allSettled([
-            this.scrapeYCombinator(),
-            this.scrapeWellfound(),
-            Promise.all(GREENHOUSE_COMPANIES.map((slug) => this.scrapeGreenhouseBoard(slug))).then((r) => r.flat()),
-            Promise.all(LEVER_COMPANIES.map((slug) => this.scrapeLeverBoard(slug))).then((r) => r.flat()),
-        ]);
+        // Companies on Lever with working public boards
+        const LEVER_COMPANIES: Array<[string, string]> = [
+            ['vercel', 'Vercel'],
+            ['scale', 'Scale AI'],
+            ['huggingface', 'HuggingFace'],
+            ['cohere', 'Cohere'],
+            ['mistral', 'Mistral AI'],
+        ];
+
+        logger.info('[Scraper] Starting API-based job collection...');
+
+        const greenhouseResults = await Promise.allSettled(
+            GREENHOUSE_COMPANIES.map(([slug, name]) => this.scrapeGreenhouseCompany(slug, name))
+        );
+
+        const leverResults = await Promise.allSettled(
+            LEVER_COMPANIES.map(([slug, name]) => this.scrapeLeverCompany(slug, name))
+        );
 
         const all: RawJob[] = [];
-        if (ycJobs.status === 'fulfilled') all.push(...ycJobs.value);
-        if (wfJobs.status === 'fulfilled') all.push(...wfJobs.value);
-        if (ghJobs.status === 'fulfilled') all.push(...ghJobs.value);
-        if (lvJobs.status === 'fulfilled') all.push(...lvJobs.value);
 
-        logger.info(`Total scraped: ${all.length} jobs from all sources`);
+        for (const r of [...greenhouseResults, ...leverResults]) {
+            if (r.status === 'fulfilled') all.push(...r.value);
+        }
+
+        logger.info(`[Scraper] Total scraped: ${all.length} jobs from all sources`);
         return all;
     }
+
+    // Keep for backwards compat (no-op now)
+    async closeBrowser(): Promise<void> { }
 }
 
 export const scraperService = new ScraperService();

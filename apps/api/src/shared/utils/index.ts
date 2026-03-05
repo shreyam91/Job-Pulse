@@ -69,9 +69,12 @@ export function computeFinalScore(params: {
     companyQuality: number;
 }): number {
     const { matchScore, freshness, companyQuality } = params;
-    return Math.round(
-        matchScore * 0.6 + freshness * 0.25 + companyQuality * 0.15
+    const raw = Math.round(
+        Math.min(100, matchScore) * 0.6 +
+        Math.min(100, freshness) * 0.25 +
+        Math.min(100, companyQuality) * 0.15
     );
+    return Math.min(100, Math.max(0, raw));
 }
 
 /**
