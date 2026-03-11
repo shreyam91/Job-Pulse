@@ -268,9 +268,15 @@ export default function MobileJobSheet() {
                   </div>
 
                   {/* Job description */}
-                  <div className="rounded-xl border border-white/[0.06] bg-[#13151c] p-4">
-                    <h4 className="text-sm font-semibold text-white/70 mb-3">Job Description</h4>
-                    <p className="text-xs text-white/40 leading-relaxed whitespace-pre-wrap">{job.description}</p>
+                  <div className="rounded-xl border border-white/[0.06] bg-[#13151c] p-5">
+                    <h4 className="text-sm font-semibold text-white/70 mb-4 flex items-center gap-2">
+                       <Briefcase className="w-4 h-4 text-indigo-400" />
+                       Description
+                    </h4>
+                    <div 
+                      className="text-[13px] text-white/60 leading-relaxed font-sans max-h-[600px] overflow-y-auto pr-2 custom-scrollbar prose prose-invert prose-sm prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 max-w-none"
+                      dangerouslySetInnerHTML={{ __html: job.description }}
+                    />
                   </div>
                 </div>
               </div>

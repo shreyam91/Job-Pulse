@@ -34,25 +34,33 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
   const [avgMatchScore, setAvgMatchScore] = useState(0);
 
   const fetchRankedJobs = useCallback(async () => {
-    if (!resume?.id) return;
     setIsLoadingJobs(true);
     try {
-      const grouped = await jobsApi.getRankedJobs(resume.id, {
-        search: filters.search,
-        workMode: filters.workMode,
-      });
-      setGroupedJobs(grouped);
-      const all = [...grouped.topMatches, ...grouped.goodMatches, ...grouped.stretchOpportunities];
-      if (all.length > 0) {
-        const avg = Math.round(all.reduce((s, j) => s + (j.analysis?.matchScore || 0), 0) / all.length);
-        setAvgMatchScore(avg);
+      if (resume?.id) {
+        const grouped = await jobsApi.getRankedJobs(resume.id, filters);
+        setGroupedJobs(grouped);
+        const all = [...grouped.topMatches, ...grouped.goodMatches, ...grouped.stretchOpportunities];
+        if (all.length > 0) {
+          const avg = Math.round(all.reduce((s, j) => s + (j.analysis?.matchScore || 0), 0) / all.length);
+          setAvgMatchScore(avg);
+        } else {
+          setAvgMatchScore(0);
+        }
+      } else {
+        const data = await jobsApi.getJobs({ ...filters, limit: 100 });
+        setGroupedJobs({
+          topMatches: data.jobs || [],
+          goodMatches: [],
+          stretchOpportunities: []
+        });
+        setAvgMatchScore(0);
       }
     } catch (err) {
-      console.error('Failed to fetch ranked jobs:', err);
+      console.error('Failed to fetch jobs:', err);
     } finally {
       setIsLoadingJobs(false);
     }
-  }, [resume?.id, filters.search, JSON.stringify(filters.workMode)]);
+  }, [resume?.id, JSON.stringify(filters)]);
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -66,17 +74,27 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
   useEffect(() => { fetchRankedJobs(); }, [fetchRankedJobs]);
   useEffect(() => { if (panelTab === 'analytics') fetchAnalytics(); }, [panelTab, fetchAnalytics]);
 
-  const handleRefresh = async () => {
+  const handleFilterJobs = async () => {
     setIsRefreshing(true);
-    toast.loading('Scraping fresh jobs...', { id: 'refresh' });
+    try {
+      await fetchRankedJobs();
+      toast.success('Job matches filtered!');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleScrapeJobs = async () => {
+    setIsRefreshing(true);
+    toast.loading('Scraping fresh jobs...', { id: 'scrape' });
     try {
       await jobsApi.refreshJobs();
       await new Promise((r) => setTimeout(r, 1500));
       await fetchRankedJobs();
-      toast.success('Jobs refreshed successfully!', { id: 'refresh' });
+      toast.success('Jobs scraped successfully!', { id: 'scrape' });
     } catch (err) {
-      console.error('Refresh failed:', err);
-      toast.error('Failed to refresh jobs. Check your API connection.', { id: 'refresh' });
+      console.error('Scrape failed:', err);
+      toast.error('Failed to scrape jobs. Check your API connection.', { id: 'scrape' });
     } finally {
       setIsRefreshing(false);
     }
@@ -96,14 +114,14 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
           <div className="absolute left-0 top-0 bottom-0 w-72 z-50">
-            <Sidebar onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+            <Sidebar onFilter={handleFilterJobs} onScrape={handleScrapeJobs} isRefreshing={isRefreshing} />
           </div>
         </div>
       )}
 
       {/* Left: Sidebar */}
       <div className="hidden lg:flex w-64 xl:w-72 flex-shrink-0 flex-col">
-        <Sidebar onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+        <Sidebar onFilter={handleFilterJobs} onScrape={handleScrapeJobs} isRefreshing={isRefreshing} />
       </div>
 
       {/* Center: Job List */}

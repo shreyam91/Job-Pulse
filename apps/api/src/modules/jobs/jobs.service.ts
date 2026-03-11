@@ -125,8 +125,41 @@ export class JobsService {
         if (!analyses.length) return [];
 
         const jobIds = analyses.map((a) => a.jobId);
-        const jobs = await JobModel.find({ _id: { $in: jobIds }, isExpired: false })
-            .lean();
+
+        const query: FilterQuery<JobDocument> = { _id: { $in: jobIds }, isExpired: false };
+
+        if (filters.search) {
+            query.$or = [
+                { title: { $regex: filters.search, $options: 'i' } },
+                { skills: { $in: [new RegExp(filters.search, 'i')] } },
+                { tags: { $in: [new RegExp(filters.search, 'i')] } },
+                { company: { $regex: filters.search, $options: 'i' } },
+            ];
+        }
+
+        if (filters.techStack && filters.techStack.length > 0) {
+            query.skills = { $in: filters.techStack.map((t) => new RegExp(t, 'i')) };
+        }
+
+        if (filters.workMode && filters.workMode.length > 0) {
+            query.workMode = { $in: filters.workMode };
+        }
+
+        if (filters.location === 'Remote Only') {
+            query.workMode = 'remote';
+        } else if (filters.location === 'Remote + Global') {
+            query.workMode = { $in: ['remote', 'hybrid'] };
+        } else if (filters.country) {
+            query.location = { $regex: filters.country, $options: 'i' };
+        }
+
+        if (filters.experienceYears) {
+            const [min, max] = filters.experienceYears.split('-').map(Number);
+            if (!isNaN(min)) query['experienceYears.min'] = { $lte: min };
+            if (!isNaN(max)) query['experienceYears.max'] = { $gte: max };
+        }
+
+        const jobs = await JobModel.find(query).lean();
 
         const jobMap = new Map(jobs.map((j) => [String(j._id), j]));
 

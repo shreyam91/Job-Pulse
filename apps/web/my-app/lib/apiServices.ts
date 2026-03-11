@@ -19,7 +19,11 @@ export const jobsApi = {
     getRankedJobs: async (resumeId: string, filters?: Partial<JobFilters>): Promise<GroupedJobs> => {
         const params = new URLSearchParams({ resumeId });
         if (filters?.search) params.set('search', filters.search);
+        if (filters?.techStack?.length) params.set('techStack', filters.techStack.join(','));
         if (filters?.workMode?.length) params.set('workMode', filters.workMode.join(','));
+        if (filters?.location) params.set('location', filters.location);
+        if (filters?.country) params.set('country', filters.country);
+        if (filters?.experienceYears) params.set('experienceYears', filters.experienceYears);
         const res = await api.get(`/jobs/ranked?${params.toString()}`);
         return res.data.data;
     },

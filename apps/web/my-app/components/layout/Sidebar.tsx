@@ -36,14 +36,15 @@ const EXPERIENCE_OPTIONS = [
 ];
 
 interface SidebarProps {
-  onRefresh: () => void;
+  onFilter: () => void;
+  onScrape: () => void;
   isRefreshing: boolean;
 }
 
 const selectClass = 'w-full bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2 text-xs text-white/70 focus:outline-none focus:border-indigo-500/50 appearance-none transition-colors';
 const labelClass = 'block text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-2';
 
-export default function Sidebar({ onRefresh, isRefreshing }: SidebarProps) {
+export default function Sidebar({ onFilter, onScrape, isRefreshing }: SidebarProps) {
   const { filters, setFilter, resetFilters } = useAppStore();
   const [locationMode, setLocationMode] = useState('');
   const [showCountry, setShowCountry] = useState(false);
@@ -208,10 +209,10 @@ export default function Sidebar({ onRefresh, isRefreshing }: SidebarProps) {
         </section>
       </div>
 
-      {/* Refresh button */}
-      <div className="flex-shrink-0 p-4 border-t border-white/[0.06]">
+      {/* Action buttons */}
+      <div className="flex-shrink-0 p-4 border-t border-white/[0.06] flex flex-col gap-2">
         <button
-          onClick={onRefresh}
+          onClick={onFilter}
           disabled={isRefreshing}
           className={cn(
             'w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200',
@@ -220,8 +221,22 @@ export default function Sidebar({ onRefresh, isRefreshing }: SidebarProps) {
               : 'bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-lg shadow-indigo-900/30'
           )}
         >
-          {isRefreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-          {isRefreshing ? 'Matching...' : 'Refresh Job Matches'}
+          <RotateCcw className="w-4 h-4" />
+          Refresh Job Matches
+        </button>
+
+        <button
+          onClick={onScrape}
+          disabled={isRefreshing}
+          className={cn(
+            'w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border',
+            isRefreshing
+              ? 'bg-white/[0.02] text-white/30 border-white/[0.05] cursor-not-allowed'
+              : 'bg-transparent hover:bg-white/[0.05] text-white border-white/10 hover:border-white/20'
+          )}
+        >
+          {isRefreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Loader2 className="w-4 h-4" />}
+          {isRefreshing ? 'Scraping...' : 'Scrape New Jobs'}
         </button>
       </div>
     </div>

@@ -56,6 +56,9 @@ export const jobsController = {
             search: req.query.search as string,
             techStack: req.query.techStack ? (req.query.techStack as string).split(',') : undefined,
             workMode: req.query.workMode ? (req.query.workMode as string).split(',') as any : undefined,
+            location: req.query.location as string,
+            country: req.query.country as string,
+            experienceYears: req.query.experienceYears as string,
             page: parseInt(req.query.page as string || '1', 10),
             limit: parseInt(req.query.limit as string || '50', 10),
         };
