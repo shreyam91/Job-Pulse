@@ -41,7 +41,7 @@ const config = {
     },
 
     cron: {
-        scraper: process.env.SCRAPER_CRON || '0 */6 * * *',
+        scraper: process.env.SCRAPER_CRON || '0 */2 * * *',
         cleanup: process.env.CLEANUP_CRON || '0 2 * * *',
     },
 

@@ -251,7 +251,7 @@ export default function JobDetailPanel() {
              Description
            </h4>
            <div 
-             className="text-[13px] text-white/60 leading-relaxed font-sans max-h-[600px] overflow-y-auto pr-2 custom-scrollbar prose prose-invert prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 max-w-none"
+             className="text-[13px] text-white/60 leading-relaxed font-sans prose prose-invert prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 max-w-none"
              dangerouslySetInnerHTML={{ __html: job.description }}
            />
         </div>

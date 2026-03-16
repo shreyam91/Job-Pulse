@@ -86,3 +86,5 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+// Hot reload trigger

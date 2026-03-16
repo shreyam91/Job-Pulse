@@ -19,7 +19,7 @@ async function processCleanupJob(job: any): Promise<void> {
     }
 
     if (tasks.includes('expire')) {
-        const expired = await jobsService.expireOldJobs(60);
+        const expired = await jobsService.expireOldJobs(7);
         results.jobsExpired = expired;
         await job.updateProgress(66);
     }
@@ -40,7 +40,7 @@ async function startWorker(): Promise<void> {
         QUEUE_NAMES.CLEANUP,
         processCleanupJob,
         {
-            connection: redisConnection,
+            connection: redisConnection as any,
             concurrency: 1,
         }
     );

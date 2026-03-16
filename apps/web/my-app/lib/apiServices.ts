@@ -10,6 +10,7 @@ export const jobsApi = {
         if (filters.location) params.set('location', filters.location);
         if (filters.country) params.set('country', filters.country);
         if (filters.experienceYears) params.set('experienceYears', filters.experienceYears);
+        if (filters.sortBy) params.set('sortBy', filters.sortBy);
         if (filters.page) params.set('page', String(filters.page));
         if (filters.limit) params.set('limit', String(filters.limit));
         const res = await api.get(`/jobs?${params.toString()}`);
@@ -24,6 +25,9 @@ export const jobsApi = {
         if (filters?.location) params.set('location', filters.location);
         if (filters?.country) params.set('country', filters.country);
         if (filters?.experienceYears) params.set('experienceYears', filters.experienceYears);
+        if (filters?.sortBy) params.set('sortBy', filters.sortBy);
+        if (filters?.page) params.set('page', String(filters.page));
+        if (filters?.limit) params.set('limit', String(filters.limit));
         const res = await api.get(`/jobs/ranked?${params.toString()}`);
         return res.data.data;
     },

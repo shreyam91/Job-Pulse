@@ -60,6 +60,7 @@ export interface JobFilters {
     country?: string;
     workMode?: WorkMode[];
     experienceYears?: string;
+    sortBy?: string;
     page?: number;
     limit?: number;
     resumeId?: string;

@@ -21,6 +21,8 @@ interface AppState {
     setActiveTab: (tab: 'all' | 'saved' | 'applied') => void;
     isLoadingJobs: boolean;
     setIsLoadingJobs: (loading: boolean) => void;
+    dashboardType: 'jobs' | 'interview';
+    setDashboardType: (type: 'jobs' | 'interview') => void;
 }
 
 const DEFAULT_FILTERS: JobFilters = {
@@ -30,6 +32,8 @@ const DEFAULT_FILTERS: JobFilters = {
     country: '',
     workMode: [],
     experienceYears: '',
+    sortBy: 'recent',
+    page: 1,
 };
 
 export const useAppStore = create<AppState>()(
@@ -42,7 +46,13 @@ export const useAppStore = create<AppState>()(
             selectedJob: null,
             setSelectedJob: (selectedJob) => set({ selectedJob }),
             filters: DEFAULT_FILTERS,
-            setFilter: (key, value) => set((state) => ({ filters: { ...state.filters, [key]: value } })),
+            setFilter: (key, value) => set((state) => ({ 
+                filters: { 
+                    ...state.filters, 
+                    [key]: value,
+                    ...(key !== 'page' ? { page: 1 } : {})
+                } 
+            })),
             resetFilters: () => set({ filters: DEFAULT_FILTERS }),
             savedJobs: [],
             toggleSaveJob: (jobId) =>
@@ -59,6 +69,8 @@ export const useAppStore = create<AppState>()(
             setActiveTab: (activeTab) => set({ activeTab }),
             isLoadingJobs: false,
             setIsLoadingJobs: (isLoadingJobs) => set({ isLoadingJobs }),
+            dashboardType: 'jobs',
+            setDashboardType: (dashboardType) => set({ dashboardType }),
         }),
         {
             name: 'aijob-store',
@@ -67,6 +79,7 @@ export const useAppStore = create<AppState>()(
                 savedJobs: state.savedJobs,
                 applicationStatuses: state.applicationStatuses,
                 filters: state.filters,
+                dashboardType: state.dashboardType,
             }),
         }
     )

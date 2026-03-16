@@ -83,15 +83,30 @@ export class JobsService {
 
         if (experienceYears) {
             const [min, max] = experienceYears.split('-').map(Number);
-            if (!isNaN(min)) query['experienceYears.min'] = { $lte: min };
-            if (!isNaN(max)) query['experienceYears.max'] = { $gte: max };
+            if (!isNaN(max)) {
+                // The candidate's max experience is `max`. The job's minimum required experience should be <= `max`.
+                query['$or'] = [
+                    ...query['$or'] || [],
+                    { 'experienceYears.min': { $lte: max } },
+                    { 'experienceYears.min': { $exists: false } },
+                    { 'experienceYears.min': null }
+                ];
+            }
         }
 
         const skip = (page - 1) * limit;
+        
+        // Sorting logic based on filters.sortBy
+        let sortParam: any = { postedAt: -1, freshnessScore: -1 };
+        if (filters.sortBy === 'recent') {
+            sortParam = { postedAt: -1 };
+        } else if (filters.sortBy === 'bestMatch') {
+            sortParam = { freshnessScore: -1, companyQualityScore: -1, postedAt: -1 };
+        }
 
         const [jobs, total] = await Promise.all([
             JobModel.find(query)
-                .sort({ postedAt: -1, freshnessScore: -1 })
+                .sort(sortParam)
                 .skip(skip)
                 .limit(limit)
                 .lean(),
@@ -99,7 +114,7 @@ export class JobsService {
         ]);
 
         return {
-            jobs: jobs as IJob[],
+            jobs: jobs as unknown as IJob[],
             total,
             page,
             limit,
@@ -111,7 +126,7 @@ export class JobsService {
      * Get a single job by ID
      */
     async getJobById(id: string): Promise<IJob | null> {
-        return JobModel.findById(id).lean();
+        return JobModel.findById(id).lean() as unknown as IJob | null;
     }
 
     /**
@@ -155,15 +170,22 @@ export class JobsService {
 
         if (filters.experienceYears) {
             const [min, max] = filters.experienceYears.split('-').map(Number);
-            if (!isNaN(min)) query['experienceYears.min'] = { $lte: min };
-            if (!isNaN(max)) query['experienceYears.max'] = { $gte: max };
+            if (!isNaN(max)) {
+                query['$or'] = [
+                    ...query['$or'] || [],
+                    { 'experienceYears.min': { $lte: max } },
+                    { 'experienceYears.min': { $exists: false } },
+                    { 'experienceYears.min': null }
+                ];
+            }
         }
 
         const jobs = await JobModel.find(query).lean();
 
         const jobMap = new Map(jobs.map((j) => [String(j._id), j]));
 
-        return analyses
+        let results = analyses
+            .filter((analysis) => jobMap.has(analysis.jobId)) // only keep analyses whose job matches filters
             .map((analysis) => ({
                 ...(jobMap.get(analysis.jobId) || {}),
                 analysis: {
@@ -177,15 +199,28 @@ export class JobsService {
                     improvementSuggestion: analysis.improvementSuggestion,
                     matchBreakdown: analysis.matchBreakdown,
                 },
-            }))
-            .filter((item) => item._id); // filter out orphaned analyses
+            }));
+            
+        // Sorting logic based on filters.sortBy
+        if (filters.sortBy === 'recent') {
+            results.sort((a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime());
+        } else {
+            // Default bestMatch (already sorted by finalScore from analysis DB query, but let's be explicit and stable)
+            results.sort((a, b) => (b.analysis.finalScore || 0) - (a.analysis.finalScore || 0));
+        }
+
+        const page = filters.page || 1;
+        const limit = filters.limit || 20;
+        const skip = (page - 1) * limit;
+
+        return results.slice(skip, skip + limit);
     }
 
     /**
      * Get analysis for a specific job + resume pair
      */
     async getAnalysis(jobId: string, resumeId: string): Promise<IJobAnalysis | null> {
-        return JobAnalysisModel.findOne({ jobId, resumeId }).lean();
+        return JobAnalysisModel.findOne({ jobId, resumeId }).lean() as unknown as IJobAnalysis | null;
     }
 
     /**
@@ -197,7 +232,7 @@ export class JobsService {
             { $set: { ...analysis, analysedAt: new Date() } },
             { upsert: true, new: true, runValidators: true }
         );
-        return result.toObject();
+        return result.toObject() as unknown as IJobAnalysis;
     }
 
     /**

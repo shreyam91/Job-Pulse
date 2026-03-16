@@ -68,6 +68,9 @@ export interface JobFilters {
     country: string;
     workMode: WorkMode[];
     experienceYears: string;
+    sortBy?: 'recent' | 'bestMatch' | 'salaryHigh' | 'salaryLow' | 'companyScore' | 'freshness';
+    page?: number;
+    limit?: number;
 }
 
 export interface AnalyticsData {
