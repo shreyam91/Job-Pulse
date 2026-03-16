@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 const TECH_STACK_OPTIONS = [
   'React', 'Next.js', 'Node.js', 'Python', 'Java', 'Go',
-  'AWS', 'Docker', 'Kubernetes', 'TypeScript', 'Vue', 'Angular',
+  'AWS', 'Docker', 'Kubernetes', 'TypeScript', 'Angular',
 ];
 
 const WORK_MODE_OPTIONS: { value: WorkMode; label: string }[] = [

@@ -223,7 +223,7 @@ export default function FAQPage() {
         </div>
 
         {/* Still Need Help */}
-        <div className="mt-20 p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/5 text-center relative overflow-hidden">
+        {/* <div className="mt-20 p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/5 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-30" />
           <div className="relative z-10 max-w-2xl mx-auto">
             <h3 className="text-2xl font-bold mb-4">Still have questions?</h3>
@@ -239,7 +239,7 @@ export default function FAQPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

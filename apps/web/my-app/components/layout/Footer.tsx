@@ -51,10 +51,9 @@ const SOCIAL_LINKS = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0a0b0f] border-t border-white/5">
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12">
-          {/* Brand */}
+    <footer className="bg-[#0a0b0f] border-white/5">
+      <div className="max-w-6xl mx-auto px-6 py-6">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12">
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2.5 transition-transform hover:scale-105 inline-block mb-6">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-indigo-600/20">
@@ -84,7 +83,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links */}
           {FOOTER_LINKS.map((section) => (
             <div key={section.title}>
               <h3 className="text-sm font-semibold text-white/80 mb-4">{section.title}</h3>
@@ -102,11 +100,11 @@ export default function Footer() {
               </ul>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {/* Contact Info */}
-        <div className="mt-16 pt-8 border-t border-white/5">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div className="mt-16 pt-8 border-white/5">
+          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div className="flex items-center gap-3">
               <Mail className="w-5 h-5 text-indigo-400" />
               <div>
@@ -130,7 +128,7 @@ export default function Footer() {
                 <p className="text-sm text-white/40">San Francisco, CA</p>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Bottom Bar */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/5">
@@ -138,7 +136,7 @@ export default function Footer() {
               © 2026 JobMatch AI. All rights reserved.
             </p>
             
-            <div className="flex items-center gap-6">
+            {/* <div className="flex items-center gap-6">
               <Link href="/privacy" className="text-sm text-white/40 hover:text-white/60 transition-colors">
                 Privacy
               </Link>
@@ -148,6 +146,18 @@ export default function Footer() {
               <Link href="/cookies" className="text-sm text-white/40 hover:text-white/60 transition-colors">
                 Cookies
               </Link>
+            </div> */}
+            <div className="flex items-center gap-4">
+              {SOCIAL_LINKS.map((social) => (
+                <Link
+                  key={social.label}
+                  href={social.href}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label={social.label}
+                >
+                  <social.icon className="w-4 h-4 text-white/60" />
+                </Link>
+              ))}
             </div>
           </div>
         </div>

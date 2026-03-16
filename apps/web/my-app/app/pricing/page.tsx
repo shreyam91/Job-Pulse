@@ -10,7 +10,7 @@ import Footer from '@/components/layout/Footer';
 const PLANS = [
   {
     name: 'Free',
-    price: '$0',
+    price: '₹ 0',
     description: 'Perfect for exploring the platform',
     features: [
       '10 job matches per day',
@@ -26,37 +26,39 @@ const PLANS = [
   },
   {
     name: 'Pro',
-    price: '$19',
+    price: '₹ 99',
+    period: '/mo',
+    description: 'For casual job seekers',
+    features: [
+      'Unlimited job matches',
+      'Advanced Gemini AI Analysis',
+      'Priority resume parsing',
+      '10 AI Mock Interviews',
+      'Cold email generation',
+      'ATS score optimization',
+      'Priority support'
+    ],
+    cta: 'Go Pro',
+    popular: false,
+    gradient: 'from-indigo-500/20 to-purple-500/20',
+    borderColor: 'border-indigo-500/30'
+  },
+  {
+    name: 'Pro Plus',
+    price: '₹ 199',
     period: '/mo',
     description: 'For serious job seekers',
     features: [
       'Unlimited job matches',
       'Advanced Gemini AI Analysis',
       'Priority resume parsing',
-      'Unlimited AI Mock Interviews',
+      '50 AI Mock Interviews',
       'Cold email generation',
       'ATS score optimization',
       'Priority support'
     ],
-    cta: 'Go Pro',
+    cta: 'Go Pro Plus',
     popular: true,
-    gradient: 'from-indigo-500/20 to-purple-500/20',
-    borderColor: 'border-indigo-500/30'
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    description: 'For teams and recruiters',
-    features: [
-      'Bulk candidate analysis',
-      'Custom AI interview agents',
-      'API access',
-      'Dedicated success manager',
-      'Custom branding',
-      'SLA & Security'
-    ],
-    cta: 'Contact Sales',
-    popular: false,
     gradient: 'from-emerald-500/10 to-teal-500/10',
     borderColor: 'border-white/10'
   }
@@ -83,7 +85,7 @@ export default function PricingPage() {
               Invest in your <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent">Future</span>
             </h1>
             <p className="text-white/40 max-w-2xl mx-auto text-lg leading-relaxed">
-              Choose the plan that fits your career goals. Whether you're just starting out or looking for your next executive role.
+              Choose the plan that fits your career goals. Whether you&apos;re just starting out or looking for your next executive role.
             </p>
           </motion.div>
         </div>
@@ -144,7 +146,7 @@ export default function PricingPage() {
           ))}
         </div>
 
-        <div className="mt-20 p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/[0.05] text-center relative overflow-hidden">
+        {/* <div className="mt-20 p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/[0.05] text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-30" />
           <div className="relative z-10 max-w-2xl mx-auto">
             <h3 className="text-2xl font-bold mb-4">Still have questions?</h3>
@@ -155,7 +157,8 @@ export default function PricingPage() {
               View FAQ
             </button>
           </div>
-        </div>
+        </div> */}
+
       </div>
       <Footer />
     </div>

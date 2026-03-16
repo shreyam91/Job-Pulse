@@ -231,15 +231,15 @@ export default function PrivacyPage() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center p-4 rounded-xl bg-white/5">
-                <div className="text-2xl font-bold text-indigo-400 mb-2">30 Days</div>
+                <div className="text-2xl font-bold text-indigo-400 mb-2">7 Days</div>
                 <div className="text-xs text-white/40">Account deletion</div>
               </div>
               <div className="text-center p-4 rounded-xl bg-white/5">
-                <div className="text-2xl font-bold text-emerald-400 mb-2">2 Years</div>
+                <div className="text-2xl font-bold text-emerald-400 mb-2">1 Years</div>
                 <div className="text-xs text-white/40">Inactive accounts</div>
               </div>
               <div className="text-center p-4 rounded-xl bg-white/5">
-                <div className="text-2xl font-bold text-purple-400 mb-2">7 Years</div>
+                <div className="text-2xl font-bold text-purple-400 mb-2">2 Years</div>
                 <div className="text-xs text-white/40">Legal compliance</div>
               </div>
             </div>
@@ -247,7 +247,7 @@ export default function PrivacyPage() {
         </div>
 
         {/* Contact for Privacy */}
-        <div className="p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/5 text-center relative overflow-hidden">
+        {/* <div className="p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/5 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-30" />
           <div className="relative z-10 max-w-2xl mx-auto">
             <AlertTriangle className="w-12 h-12 text-indigo-400 mx-auto mb-4" />
@@ -264,7 +264,7 @@ export default function PrivacyPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

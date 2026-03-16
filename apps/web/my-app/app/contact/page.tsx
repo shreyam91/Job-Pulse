@@ -61,9 +61,9 @@ export default function ContactPage() {
               <p className="text-xs text-white/40 leading-relaxed mb-4">
                 Found a bug or need help with your AI interview session? Our tech team is online 24/7.
               </p>
-              <button className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-2">
+              {/* <button className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-2">
                 Open Support Ticket <Send className="w-3 h-3" />
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -88,8 +88,6 @@ export default function ContactPage() {
                   <select className="w-full bg-[#0a0b0f] border border-white/10 rounded-2xl py-4 px-6 text-sm focus:outline-none focus:border-indigo-500 appearance-none transition-all">
                     <option>General Inquiry</option>
                     <option>Technical Support</option>
-                    <option>Partnership</option>
-                    <option>Press</option>
                   </select>
                 </div>
                 <div className="md:col-span-2 space-y-2">
@@ -108,14 +106,13 @@ export default function ContactPage() {
       </div>
 
       {/* Careers Section */}
-      <div className="max-w-6xl mx-auto relative z-10 px-6 pb-24">
+      {/* <div className="max-w-6xl mx-auto relative z-10 px-6 pb-24">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold mb-4">Join Our Team</h2>
           <div className="w-20 h-1 bg-gradient-to-r from-indigo-500 to-emerald-500 mx-auto rounded-full" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Why Join Us */}
           <div className="lg:col-span-4 space-y-8">
             <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/20">
               <h3 className="text-lg font-bold mb-4 text-indigo-400">Why Join JobMatch AI?</h3>
@@ -151,7 +148,6 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Open Positions */}
           <div className="lg:col-span-8">
             <div className="bg-white/2 border border-white/5 rounded-[40px] p-8 md:p-12">
               <h3 className="text-2xl font-bold mb-8">Open Positions</h3>
@@ -247,7 +243,7 @@ export default function ContactPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
       <Footer />
     </div>
   );

@@ -101,7 +101,7 @@ export default function AboutPage() {
         </div>
 
         {/* Team CTA */}
-        <div className="p-12 rounded-[40px] bg-[#1a1c23] border border-white/5 relative overflow-hidden text-center mb-32">
+        {/* <div className="p-12 rounded-[40px] bg-[#1a1c23] border border-white/5 relative overflow-hidden text-center mb-32">
           <Sparkles className="absolute left-10 bottom-10 w-20 h-24 text-white/5 rotate-12" />
           <h2 className="text-3xl font-bold mb-4">We're just getting started.</h2>
           <p className="text-white/40 max-w-xl mx-auto mb-8">
@@ -110,7 +110,7 @@ export default function AboutPage() {
           <button className="px-10 py-4 rounded-2xl bg-white text-black font-black hover:bg-white/90 transition-all">
             Join the Revolution
           </button>
-        </div>
+        </div> */}
 
         {/* Release Notes */}
         <div className="mb-32">
@@ -169,7 +169,7 @@ export default function AboutPage() {
         </div>
 
         {/* Support Section */}
-        <div className="mb-32">
+        {/* <div className="mb-32">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Support & Resources</h2>
             <div className="w-20 h-1 bg-gradient-to-r from-indigo-500 to-emerald-500 mx-auto rounded-full" />
@@ -215,7 +215,8 @@ export default function AboutPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
+        
       </div>
       <Footer />
     </div>

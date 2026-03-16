@@ -334,7 +334,7 @@ export default function InterviewAgentPage() {
         </div>
 
         {/* CTA */}
-        <div className="p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/5 text-center relative overflow-hidden">
+        {/* <div className="p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/5 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-30" />
           <div className="relative z-10 max-w-2xl mx-auto">
             <MessageCircle className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
@@ -349,7 +349,7 @@ export default function InterviewAgentPage() {
               Start Practice Session
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

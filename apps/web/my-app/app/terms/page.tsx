@@ -294,7 +294,7 @@ export default function TermsPage() {
         </div>
 
         {/* Contact */}
-        <div className="p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/5 text-center relative overflow-hidden">
+        {/* <div className="p-12 rounded-[40px] bg-gradient-to-br from-[#13151c] to-[#0a0b0f] border border-white/5 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-30" />
           <div className="relative z-10 max-w-2xl mx-auto">
             <AlertCircle className="w-12 h-12 text-indigo-400 mx-auto mb-4" />
@@ -311,7 +311,7 @@ export default function TermsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>
