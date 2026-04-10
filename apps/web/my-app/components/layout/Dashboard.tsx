@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import MobileJobSheet from '@/components/jobs/MobileJobSheet';
 import { jobsApi } from '@/lib/apiServices';
 import { useAppStore } from '@/store/appStore';
-import type { AnalyticsData, Job } from '@/types';
+import type { AnalyticsData, Job, GroupedJobs } from '@/types';
 import { toast } from 'sonner';
 import DashboardHeader from '../dashboard/DashboardHeader';
 import AIHintBar from '../dashboard/AIHintBar';
@@ -94,7 +94,7 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
               topMatches: [],
               goodMatches: [
                 ...(currentGrouped.goodMatches || []),
-                ...(data.jobs || []).filter(job => !existingGoodIds.has(job._id))
+                ...(data.jobs || []).filter((job: Job) => !existingGoodIds.has(job._id))
               ],
               stretchOpportunities: []
             };
@@ -104,7 +104,7 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
             newGrouped = {
               topMatches: [
                 ...(currentGrouped.topMatches || []),
-                ...(data.jobs || []).filter(job => !existingTopIds.has(job._id))
+                ...(data.jobs || []).filter((job: Job) => !existingTopIds.has(job._id))
               ],
               goodMatches: [],
               stretchOpportunities: []
