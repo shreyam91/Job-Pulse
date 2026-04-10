@@ -170,7 +170,7 @@ export const jobsController = {
 
             for (const rawJob of rawJobs) {
                 try {
-                    await jobsService.upsertJob({
+                    const saved = await jobsService.upsertJob({
                         title: rawJob.title,
                         company: rawJob.company,
                         location: rawJob.location,
@@ -186,7 +186,11 @@ export const jobsController = {
                         salary: rawJob.salary,
                         experienceYears: rawJob.experienceYears,
                     });
-                    stored++;
+                    if (saved) {
+                        stored++;
+                    } else {
+                        skipped++;
+                    }
                 } catch (err: any) {
                     if (err.code === 11000) skipped++;
                     else logger.warn(`[RefreshJobs] Failed to store job:`, err.message);

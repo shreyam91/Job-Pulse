@@ -9,7 +9,14 @@ export class JobsService {
     /**
      * Upsert a job from scraping — deduplication via sourceUrlHash
      */
-    async upsertJob(jobData: Omit<IJob, '_id' | 'sourceUrlHash' | 'scrapedAt' | 'freshnessScore' | 'companyQualityScore' | 'isExpired'>): Promise<JobDocument> {
+    async upsertJob(jobData: Omit<IJob, '_id' | 'sourceUrlHash' | 'scrapedAt' | 'freshnessScore' | 'companyQualityScore' | 'isExpired'>): Promise<JobDocument | null> {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 3);
+
+        if (new Date(jobData.postedAt) < cutoff) {
+            return null;
+        }
+
         const normalizedUrl = normalizeUrl(jobData.sourceUrl);
         const sourceUrlHash = hashUrl(normalizedUrl);
 
@@ -19,7 +26,7 @@ export class JobsService {
             employeeCount: jobData.employeeCount,
             isRemote: jobData.workMode === 'remote',
         });
-
+        
         const job = await JobModel.findOneAndUpdate(
             { sourceUrlHash },
             {
@@ -133,27 +140,64 @@ export class JobsService {
      * Get jobs with AI analysis for a given resume, sorted by finalScore
      */
     async getJobsWithAnalysis(resumeId: string, filters: JobFilters): Promise<any[]> {
+        // 1. Get existing analyses
         const analyses = await JobAnalysisModel.find({ resumeId })
             .sort({ finalScore: -1 })
             .lean();
 
-        if (!analyses.length) return [];
+        const analysisMap = new Map();
+        analyses.forEach(a => analysisMap.set(String(a.jobId), a));
+        const analyzedJobIds = analyses.map(a => String(a.jobId));
 
-        const jobIds = analyses.map((a) => a.jobId);
+        // 2. Fetch the resume to get keywords for fallback/discovery
+        const { resumeService } = await import('../resume/resume.service');
+        const resume = await resumeService.getResumeById(resumeId);
+        const resumeSkills = resume?.parsedData.skills || [];
 
-        const query: FilterQuery<JobDocument> = { _id: { $in: jobIds }, isExpired: false };
+        // 3. Build the query
+        const query: FilterQuery<JobDocument> = { isExpired: false };
+        
+        // We want jobs that ARE analyzed OR jobs that MATCH keywords
+        const matchConditions: any[] = [
+            { _id: { $in: analyzedJobIds } }
+        ];
 
+        if (resumeSkills.length > 0) {
+            const topSkills = resumeSkills.slice(0, 12);
+            matchConditions.push({
+                skills: { $in: topSkills.map(s => new RegExp(s, 'i')) }
+            });
+        }
+
+        query.$or = matchConditions;
+
+        // Apply additional filters if provided
         if (filters.search) {
-            query.$or = [
-                { title: { $regex: filters.search, $options: 'i' } },
-                { skills: { $in: [new RegExp(filters.search, 'i')] } },
-                { tags: { $in: [new RegExp(filters.search, 'i')] } },
-                { company: { $regex: filters.search, $options: 'i' } },
+            const searchRegex = new RegExp(filters.search, 'i');
+            const searchConditions = [
+                { title: searchRegex },
+                { company: searchRegex },
+                { skills: { $in: [searchRegex] } }
             ];
+            
+            // If we already have an $or from matchConditions, we need to wrap it in an $and
+            query.$and = [
+                { $or: query.$or },
+                { $or: searchConditions }
+            ];
+            delete query.$or;
         }
 
         if (filters.techStack && filters.techStack.length > 0) {
-            query.skills = { $in: filters.techStack.map((t) => new RegExp(t, 'i')) };
+            const techStackFilter = { skills: { $in: filters.techStack.map((t) => new RegExp(t, 'i')) } };
+            if (query.$and) {
+                query.$and.push(techStackFilter);
+            } else if (query.$or) {
+                query.$and = [{ $or: query.$or }, techStackFilter];
+                delete query.$or;
+            } else {
+                query.skills = techStackFilter.skills;
+            }
         }
 
         if (filters.workMode && filters.workMode.length > 0) {
@@ -171,42 +215,77 @@ export class JobsService {
         if (filters.experienceYears) {
             const [min, max] = filters.experienceYears.split('-').map(Number);
             if (!isNaN(max)) {
-                query['$or'] = [
-                    ...query['$or'] || [],
-                    { 'experienceYears.min': { $lte: max } },
-                    { 'experienceYears.min': { $exists: false } },
-                    { 'experienceYears.min': null }
-                ];
+                const expFilter = { 
+                    $or: [
+                        { 'experienceYears.min': { $lte: max } },
+                        { 'experienceYears.min': { $exists: false } },
+                        { 'experienceYears.min': null }
+                    ]
+                };
+                if (query.$and) {
+                    query.$and.push(expFilter);
+                } else {
+                    query.$and = [{ $or: query.$or }, expFilter];
+                    delete query.$or;
+                }
             }
         }
 
-        const jobs = await JobModel.find(query).lean();
+        const jobs = await JobModel.find(query)
+            .sort({ postedAt: -1 })
+            .limit(100)
+            .lean();
 
-        const jobMap = new Map(jobs.map((j) => [String(j._id), j]));
+        // 4. Transform to include analysis (or mock analysis for fallback)
+        let results = jobs.map((job) => {
+            const analysis = analysisMap.get(String(job._id));
+            if (analysis) {
+                return {
+                    ...job,
+                    analysis: {
+                        matchScore: analysis.matchScore,
+                        atsScore: analysis.atsScore,
+                        finalScore: analysis.finalScore,
+                        matchedSkills: analysis.matchedSkills,
+                        missingSkills: analysis.missingSkills,
+                        strengthSummary: analysis.strengthSummary,
+                        aiExplanation: analysis.aiExplanation,
+                        improvementSuggestion: analysis.improvementSuggestion,
+                        matchBreakdown: analysis.matchBreakdown,
+                    },
+                };
+            } else {
+                // Keyword-based fallback analysis for jobs not yet processed by AI
+                const jobSkillsLower = (job.skills || []).map(s => s.toLowerCase());
+                const resumeSkillsLower = resumeSkills.map(s => s.toLowerCase());
+                const matched = (job.skills || []).filter(s => resumeSkillsLower.includes(s.toLowerCase()));
+                
+                // Simple score for pending jobs
+                const matchScore = Math.round((matched.length / Math.max(job.skills?.length || 1, 1)) * 100);
+                
+                return {
+                    ...job,
+                    analysis: {
+                        matchScore,
+                        finalScore: matchScore * 0.8, // Slightly lower weight for non-AI scores
+                        pending: true,
+                        matchedSkills: matched,
+                    }
+                };
+            }
+        });
 
-        let results = analyses
-            .filter((analysis) => jobMap.has(analysis.jobId)) // only keep analyses whose job matches filters
-            .map((analysis) => ({
-                ...(jobMap.get(analysis.jobId) || {}),
-                analysis: {
-                    matchScore: analysis.matchScore,
-                    atsScore: analysis.atsScore,
-                    finalScore: analysis.finalScore,
-                    matchedSkills: analysis.matchedSkills,
-                    missingSkills: analysis.missingSkills,
-                    strengthSummary: analysis.strengthSummary,
-                    aiExplanation: analysis.aiExplanation,
-                    improvementSuggestion: analysis.improvementSuggestion,
-                    matchBreakdown: analysis.matchBreakdown,
-                },
-            }));
-            
-        // Sorting logic based on filters.sortBy
+
+        // 5. Sorting
         if (filters.sortBy === 'recent') {
             results.sort((a, b) => new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime());
         } else {
-            // Default bestMatch (already sorted by finalScore from analysis DB query, but let's be explicit and stable)
-            results.sort((a, b) => (b.analysis.finalScore || 0) - (a.analysis.finalScore || 0));
+            // Sort by finalScore, then by postedAt
+            results.sort((a, b) => {
+                const scoreDiff = (b.analysis?.finalScore || 0) - (a.analysis?.finalScore || 0);
+                if (scoreDiff !== 0) return scoreDiff;
+                return new Date(b.postedAt || 0).getTime() - new Date(a.postedAt || 0).getTime();
+            });
         }
 
         const page = filters.page || 1;
@@ -215,6 +294,7 @@ export class JobsService {
 
         return results.slice(skip, skip + limit);
     }
+
 
     /**
      * Get analysis for a specific job + resume pair
@@ -236,19 +316,18 @@ export class JobsService {
     }
 
     /**
-     * Mark jobs as expired
+     * Delete jobs older than 3 days
      */
-    async expireOldJobs(olderThanDays = 60): Promise<number> {
+    async expireOldJobs(olderThanDays = 3): Promise<number> {
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - olderThanDays);
 
-        const result = await JobModel.updateMany(
-            { postedAt: { $lt: cutoff }, isExpired: false },
-            { $set: { isExpired: true } }
+        const result = await JobModel.deleteMany(
+            { postedAt: { $lt: cutoff } }
         );
 
-        logger.info(`Expired ${result.modifiedCount} old jobs`);
-        return result.modifiedCount;
+        logger.info(`Deleted ${result.deletedCount} old jobs (older than ${olderThanDays} days)`);
+        return result.deletedCount;
     }
 
     /**
@@ -322,6 +401,50 @@ export class JobsService {
             }, {}),
             topCategories: topCategories.map((c) => ({ name: c._id, count: c.count })),
         };
+    }
+
+    /**
+     * Trigger batch AI analysis for all (or new) jobs for a resume
+     */
+    async triggerBatchAnalysis(resumeId: string, parsedData: any): Promise<number> {
+        const { aiMatchService } = await import('../ai/aiMatch.service');
+        const { enqueueAIMatch } = await import('../../workers/queues');
+
+        // Find jobs that don't have analysis for this resume
+        const analyses = await JobAnalysisModel.find({ resumeId }).select('jobId').lean();
+        const analysedJobIds = new Set(analyses.map(a => a.jobId));
+
+        const unanalysedJobs = await JobModel.find({ 
+            _id: { $nin: Array.from(analysedJobIds) },
+            isExpired: false
+        }).limit(100).lean(); // Limit to 100 for initial pass to avoid overwhelm
+
+        let triggered = 0;
+        for (const job of unanalysedJobs) {
+            try {
+                // Try queuing first (preferred)
+                await enqueueAIMatch(String(job._id), resumeId);
+                triggered++;
+            } catch (err) {
+                // Fallback to synchronous analysis for the first few top jobs if queue fails
+                if (triggered < 5) {
+                    try {
+                        const analysis = await aiMatchService.buildFullAnalysis(
+                            String(job._id),
+                            resumeId,
+                            job as any,
+                            parsedData
+                        );
+                        await this.upsertAnalysis(analysis);
+                        triggered++;
+                    } catch (innerErr: any) {
+                        logger.warn(`Synchronous matching failed for job ${job._id}: ${innerErr.message}`);
+                    }
+                }
+            }
+        }
+        
+        return triggered;
     }
 }
 

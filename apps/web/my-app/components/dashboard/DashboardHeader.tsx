@@ -13,6 +13,8 @@ interface DashboardHeaderProps {
   totalAnalysed: number;
   onMobileSidebarOpen: () => void;
   onBackToLanding?: () => void;
+  filters: any;
+  onFilterChange: (key: string, value: any) => void;
 }
 
 export default function DashboardHeader({
@@ -24,7 +26,9 @@ export default function DashboardHeader({
   appliedCount,
   totalAnalysed,
   onMobileSidebarOpen,
-  onBackToLanding
+  onBackToLanding,
+  filters,
+  onFilterChange
 }: DashboardHeaderProps) {
   return (
     <div className="flex-shrink-0 flex flex-col border-b border-white/[0.06] bg-[#0f1117]">
@@ -70,17 +74,18 @@ export default function DashboardHeader({
           {onBackToLanding && (
             <button
               onClick={onBackToLanding}
-              className="p-1.5 rounded-lg hover:bg-white/5 text-white/30 hover:text-white/50 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/50 transition-colors"
               title="Back to landing page"
             >
-              <Home className="w-4 h-4" />
+              <Home className="w-5 h-5" />
             </button>
           )}
         </div>
 
-        {/* Tab bar - Only show for Jobs */}
+        {/* Tab bar + Sort - Only show for Jobs */}
         {dashboardType === 'jobs' ? (
-          <div className="flex items-center gap-1 bg-white/[0.03] rounded-xl p-1">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 bg-white/[0.03] rounded-xl p-1">
             {[
               { id: 'all', label: 'All Jobs', icon: LayoutDashboard },
               { id: 'saved', label: `Saved${savedJobs.length ? ` (${savedJobs.length})` : ''}`, icon: BookmarkCheck },
@@ -103,6 +108,21 @@ export default function DashboardHeader({
               );
             })}
           </div>
+
+          <div className="hidden sm:flex items-center gap-2 ml-2">
+            <div className="flex items-center gap-2 bg-white/[0.03] border border-white/10 rounded-xl px-2 py-1">
+               <ArrowUpDown className="w-3.5 h-3.5 text-white/40" />
+               <select 
+                value={filters.sortBy || 'recent'} 
+                onChange={(e) => onFilterChange('sortBy', e.target.value)} 
+                className="bg-transparent border-none text-[11px] text-white/60 focus:outline-none appearance-none cursor-pointer pr-4"
+              >
+                <option value="recent">Recent</option>
+                <option value="bestMatch">Match</option>
+              </select>
+            </div>
+          </div>
+        </div>
         ) : (
           <div className="text-xs font-bold text-emerald-400/80 tracking-tight flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -125,4 +145,4 @@ export default function DashboardHeader({
   );
 }
 
-import { Briefcase, Mic2, LayoutDashboard, BookmarkCheck, ClipboardList, Menu, Home } from 'lucide-react';
+import { Briefcase, Mic2, LayoutDashboard, BookmarkCheck, ClipboardList, Menu, Home, ArrowUpDown } from 'lucide-react';

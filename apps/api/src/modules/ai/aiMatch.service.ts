@@ -24,7 +24,7 @@ interface AIMatchResult {
 const MATCH_PROMPT_TEMPLATE = `
 You are an expert ATS (Applicant Tracking System) and career consultant AI.
 
-Analyze the following job description and resume, then provide a detailed match analysis.
+TASK: Analyze job-resume match with PRECISION and focus on ACTUAL skill alignment.
 
 ---
 JOB TITLE: {JOB_TITLE}
@@ -43,6 +43,18 @@ Experience: {EXPERIENCE_YEARS} years
 Resume Text (excerpt): {RESUME_TEXT}
 ---
 
+CRITICAL INSTRUCTIONS:
+1. ONLY count skills that EXACTLY match between resume and job requirements
+2. Prioritize hard skills (React, Next.js, TypeScript, etc.) over soft skills
+3. Consider technology stack compatibility and framework experience
+4. Be strict about missing core requirements
+5. Experience years must align with role seniority level
+
+SCORING CRITERIA:
+- matchScore: Weight 40% - Exact skill matches, 20% - Experience fit, 20% - Tech stack, 20% - Role relevance
+- DO NOT give high scores for partial matches or "related" skills
+- Missing core required skills should significantly reduce score
+
 Respond ONLY with valid JSON matching this exact schema (no markdown, no explanation outside JSON):
 {
   "matchScore": <integer 0-100>,
@@ -50,7 +62,7 @@ Respond ONLY with valid JSON matching this exact schema (no markdown, no explana
   "matchedSkills": ["skill1", "skill2"],
   "missingSkills": ["skill1", "skill2"],
   "strengthSummary": "<2-3 sentence summary of candidate strengths>",
-  "aiExplanation": "<3-4 sentence explanation of why this job matches or doesn't match the candidate>",
+  "aiExplanation": "<3-4 sentence explanation of why this job matches or doesn't match candidate>",
   "improvementSuggestion": "<1-2 sentence actionable suggestion to improve match score>",
   "matchBreakdown": {
     "skillsAlignment": <integer 0-100>,
@@ -59,14 +71,6 @@ Respond ONLY with valid JSON matching this exact schema (no markdown, no explana
     "roleRelevance": <integer 0-100>
   }
 }
-
-matchScore: Overall match percentage.
-atsScore: How well the resume would pass ATS filters for this role.
-matchedSkills: Skills explicitly present in resume that match job requirements.
-missingSkills: Key skills in job description that are NOT in the resume.
-strengthSummary: What makes the candidate strong for this role.
-aiExplanation: Transparent reasoning for the match score.
-improvementSuggestion: Specific skills to add to reach 90%+ match.
 matchBreakdown: Granular breakdown of match dimensions.
 `.trim();
 
@@ -127,38 +131,50 @@ export class AIMatchService {
      * Rule-based fallback when AI call fails
      */
     private fallbackAnalysis(job: IJob, resume: IParsedResume): AIMatchResult {
-        const jobSkillsLower = job.skills.map((s) => s.toLowerCase());
-        const resumeSkillsLower = resume.skills.map((s) => s.toLowerCase());
+        const jobSkillsLower = (job.skills || []).map((s) => s.toLowerCase());
+        const resumeSkillsLower = (resume.skills || []).map((s) => s.toLowerCase());
 
-        const matchedSkills = resume.skills.filter((s) =>
+        // Only count EXACT matches, not partial matches
+        const matchedSkills = (resume.skills || []).filter((s) =>
             jobSkillsLower.includes(s.toLowerCase())
         );
-        const missingSkills = job.skills.filter((s) =>
+        const missingSkills = (job.skills || []).filter((s) =>
             !resumeSkillsLower.includes(s.toLowerCase())
         );
 
+        // Be strict about matching - penalize heavily for missing core skills
         const skillsAlignment = Math.round(
-            (matchedSkills.length / Math.max(job.skills.length, 1)) * 100
+            (matchedSkills.length / Math.max(job.skills?.length || 1, 1)) * 100
         );
 
+        // Calculate experience fit based on years vs role requirements
+        const experienceFit = resume.experienceYears >= 5 ? 85 : 
+                          resume.experienceYears >= 3 ? 65 : 
+                          resume.experienceYears >= 1 ? 45 : 25;
+
+        const matchScore = Math.round(skillsAlignment * 0.7 + experienceFit * 0.3);
+
         return {
-            matchScore: skillsAlignment,
-            atsScore: Math.round(skillsAlignment * 0.9),
+            matchScore,
+            atsScore: Math.round(skillsAlignment * 0.85),
             matchedSkills,
             missingSkills,
-            strengthSummary: `Candidate has ${matchedSkills.length} of ${job.skills.length} required skills.`,
-            aiExplanation: `Based on skills overlap analysis, this role matches ${skillsAlignment}% of your profile. AI analysis was temporarily unavailable.`,
+            strengthSummary: matchedSkills.length > 0 
+                ? `Matched core skills: ${matchedSkills.slice(0, 5).join(', ')}.`
+                : `Candidate meets experience requirements (${resume.experienceYears} years).`,
+            aiExplanation: `Profile matches ${matchScore}% of requirements based on keyword analysis. ${matchedSkills.length} key skills were found in your resume.`,
             improvementSuggestion: missingSkills.length > 0
-                ? `Consider adding ${missingSkills.slice(0, 3).join(', ')} to improve your match.`
-                : 'Your skills align well with this role.',
+                ? `Adding ${missingSkills.slice(0, 3).join(', ')} to your profile would improve your visibility for this role.`
+                : 'Your profile is a strong technical match for this position.',
             matchBreakdown: {
                 skillsAlignment,
-                experienceFit: 50,
+                experienceFit,
                 techStackMatch: skillsAlignment,
-                roleRelevance: 50,
+                roleRelevance: Math.round((skillsAlignment + experienceFit) / 2),
             },
         };
     }
+
 
     /**
      * Generate a cold email draft for a job

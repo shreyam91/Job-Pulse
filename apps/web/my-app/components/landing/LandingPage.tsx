@@ -164,39 +164,39 @@ const STEPS = [
 
 const TESTIMONIALS = [
   {
-    name: "Sarah Chen",
+    name: "Aarav Sharma",
     role: "Senior Frontend Developer",
-    company: "TechCorp",
-    avatar: "SC",
+    company: "Infosys",
+    avatar: "AS",
     content:
-      "JobMatch AI helped me find my dream job in just 2 weeks. The AI matching was incredibly accurate, and the interview prep was a game-changer.",
+      "JobMatch AI helped me land my dream job in just 2 weeks. The AI matching was spot on, and the interview prep really boosted my confidence.",
     rating: 5,
   },
   {
-    name: "Michael Rodriguez",
+    name: "Priya Verma",
     role: "Full Stack Engineer",
-    company: "StartupXYZ",
-    avatar: "MR",
+    company: "Flipkart",
+    avatar: "PV",
     content:
-      "The cold email generator alone saved me hours of work. I got 3x more responses and landed multiple interviews thanks to personalized outreach.",
+      "The cold email generator saved me so much time. I started getting 3x more responses and secured multiple interview calls with personalized outreach.",
     rating: 5,
   },
   {
-    name: "Emily Johnson",
+    name: "Rohan Mehta",
     role: "Product Manager",
-    company: "Enterprise Inc",
-    avatar: "EJ",
+    company: "Tata Consultancy Services",
+    avatar: "RM",
     content:
-      "From resume analysis to mock interviews, JobMatch AI provided everything I needed to level up my career. Worth every penny!",
+      "From resume analysis to mock interviews, JobMatch AI gave me everything I needed to grow in my career. Totally worth it!",
     rating: 5,
   },
   {
-    name: "David Kim",
+    name: "Neha Gupta",
     role: "Data Scientist",
-    company: "CloudBase",
-    avatar: "DK",
+    company: "Wipro",
+    avatar: "NG",
     content:
-      "The ATS score optimization helped my resume pass through automated filters. I went from 0 callbacks to 5 interviews in one week.",
+      "The ATS score optimization made a huge difference. I went from zero callbacks to multiple interview opportunities within a week.",
     rating: 4,
   },
 ];
@@ -459,7 +459,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                   <div className="flex-1 bg-[#1a1c23] border border-white/10 rounded-2xl rounded-tl-none p-4 md:p-6 shadow-xl relative mt-4">
                     <div className="absolute -left-2 top-0 w-4 h-4 bg-[#1a1c23] rotate-45 border-l border-t border-white/10" />
                     <h4 className="text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <Mic2 className="w-3 h-3" /> Shree (AI Interviwer)
+                      <Mic2 className="w-3 h-3" /> Shaurya (AI Interviwer)
                     </h4>
                     <p className="text-xs text-white/30 leading-relaxed">
                       &quot;Walk me through a complex architectural challenge
@@ -502,7 +502,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
 
                   <h5 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-emerald-400" />
-                    Nova&#39;s Insight
+                    Shaurya&#39;s Insight
                   </h5>
 
                   <div className="space-y-4">

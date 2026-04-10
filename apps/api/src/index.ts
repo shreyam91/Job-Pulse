@@ -9,6 +9,7 @@ import { errorHandler, notFoundHandler } from './api/middleware/errorHandler';
 import routes from './api/routes';
 import logger from './shared/logger';
 import config from './shared/config';
+import { jobScheduler } from './shared/scheduler';
 
 async function createApp() {
     const app = express();
@@ -66,14 +67,18 @@ async function bootstrap() {
         const port = config.port;
 
         app.listen(port, () => {
-            logger.info(`🚀 API Server running on http://localhost:${port}`);
+            logger.info(`API Server running on http://localhost:${port}`);
             logger.info(`   Environment: ${config.env}`);
             logger.info(`   MongoDB: ${config.mongodb.uri.split('@')[1] || 'connected'}`);
+            
+            // Start the job scheduler after server is ready
+            jobScheduler.start();
         });
 
         // Graceful shutdown
         process.on('SIGTERM', async () => {
             logger.info('SIGTERM received. Shutting down gracefully...');
+            jobScheduler.stop();
             const { disconnectDatabase } = await import('./shared/database');
             await disconnectDatabase();
             process.exit(0);

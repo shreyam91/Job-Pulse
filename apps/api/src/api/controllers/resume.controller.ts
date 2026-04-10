@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { resumeService } from '../../modules/resume/resume.service';
+import { jobsService } from '../../modules/jobs/jobs.service';
 import { asyncHandler, createError } from '../middleware/errorHandler';
 import logger from '../../shared/logger';
 
@@ -14,6 +15,10 @@ export const resumeController = {
         const userId = req.body.userId || req.headers['x-user-id'] || 'default-user';
 
         const resume = await resumeService.uploadResume(userId as string, req.file);
+        
+        // Trigger initial matching for jobs in the background (non-blocking for response)
+        jobsService.triggerBatchAnalysis(String(resume._id), resume.parsedData)
+            .catch(err => logger.error(`[UploadResume] Initial matching failed: ${err.message}`));
 
         res.status(201).json({
             success: true,

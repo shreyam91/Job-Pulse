@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import cron from 'node-cron';
 import { connectDatabase } from '../../shared/database';
-import { redisConnection, QUEUE_NAMES, type CleanupJobData } from '../queues';
+import { getRedis, QUEUE_NAMES, type CleanupJobData } from '../queues';
 import { jobsService } from '../../modules/jobs/jobs.service';
 import logger from '../../shared/logger';
 import config from '../../shared/config';
@@ -19,7 +19,7 @@ async function processCleanupJob(job: any): Promise<void> {
     }
 
     if (tasks.includes('expire')) {
-        const expired = await jobsService.expireOldJobs(7);
+        const expired = await jobsService.expireOldJobs(3);
         results.jobsExpired = expired;
         await job.updateProgress(66);
     }
@@ -40,7 +40,7 @@ async function startWorker(): Promise<void> {
         QUEUE_NAMES.CLEANUP,
         processCleanupJob,
         {
-            connection: redisConnection as any,
+            connection: getRedis() as any,
             concurrency: 1,
         }
     );

@@ -1,5 +1,6 @@
 import https from 'https';
 import logger from '../../shared/logger';
+import { normalizeUrl } from '../../shared/utils';
 
 export interface RawJob {
     title: string;
@@ -323,9 +324,8 @@ export class ScraperService {
             ['plaid', 'Plaid'],
         ];
 
-        // Companies on Lever with working public boards
+        // Companies on Lever with working public boards (excluding duplicates)
         const LEVER_COMPANIES: Array<[string, string]> = [
-            ['vercel', 'Vercel'],
             ['scale', 'Scale AI'],
         ];
 
@@ -348,8 +348,20 @@ export class ScraperService {
             if (r.status === 'fulfilled') all.push(...r.value);
         }
 
+        // Deduplicate jobs based on normalized URL
+        const seenUrls = new Set<string>();
+        const uniqueJobs = all.filter(job => {
+            const normalizedUrl = normalizeUrl(job.sourceUrl);
+            if (seenUrls.has(normalizedUrl)) {
+                return false; // Skip duplicate
+            }
+            seenUrls.add(normalizedUrl);
+            return true;
+        });
+
         logger.info(`[Scraper] Total scraped: ${all.length} jobs from all sources`);
-        return all;
+        logger.info(`[Scraper] After deduplication: ${uniqueJobs.length} unique jobs`);
+        return uniqueJobs;
     }
 
     // Keep for backwards compat (no-op now)

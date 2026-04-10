@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, X, ChevronDown, RotateCcw, Loader2, SlidersHorizontal, Mic2, Briefcase } from 'lucide-react';
+import { Search, X, ChevronDown, RotateCcw, Mic2, Briefcase } from 'lucide-react';
 import type { WorkMode } from '@/types';
 import { useAppStore } from '@/store/appStore';
 import ResumeUpload from '../resume/ResumeUpload';
@@ -37,15 +37,14 @@ const EXPERIENCE_OPTIONS = [
 
 interface SidebarProps {
   onFilter: () => void;
-  onScrape: () => void;
   isRefreshing: boolean;
 }
 
 const selectClass = 'w-full bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2 text-xs text-white/70 focus:outline-none focus:border-indigo-500/50 appearance-none transition-colors';
 const labelClass = 'block text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-2';
 
-export default function Sidebar({ onFilter, onScrape, isRefreshing }: SidebarProps) {
-  const { filters, setFilter, resetFilters, resume, dashboardType } = useAppStore();
+export default function Sidebar({ onFilter, isRefreshing }: SidebarProps) {
+  const { filters, setFilter, resetFilters, dashboardType } = useAppStore();
   const [locationMode, setLocationMode] = useState('');
   const [showCountry, setShowCountry] = useState(false);
 
@@ -256,20 +255,7 @@ export default function Sidebar({ onFilter, onScrape, isRefreshing }: SidebarPro
               Refresh Job Matches
             </button>
 
-            <button
-              onClick={onScrape}
-              disabled={isRefreshing}
-              className={cn(
-                'w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border',
-                isRefreshing
-                  ? 'bg-white/[0.02] text-white/30 border-white/[0.05] cursor-not-allowed'
-                  : 'bg-transparent hover:bg-white/[0.05] text-white border-white/10 hover:border-white/20'
-              )}
-            >
-              {isRefreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Loader2 className="w-4 h-4" />}
-              {isRefreshing ? 'Scraping...' : 'Scrape New Jobs'}
-            </button>
-          </>
+                      </>
         ) : (
           <button
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-lg shadow-emerald-900/30"

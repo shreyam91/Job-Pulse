@@ -22,9 +22,6 @@ const SECTION_CONFIG = [
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Most Recent' },
   { value: 'bestMatch', label: 'Best AI Match' },
-  { value: 'salaryHigh', label: 'Salary: High to Low' },
-  { value: 'salaryLow', label: 'Salary: Low to High' },
-  { value: 'companyScore', label: 'Company Score' },
   { value: 'freshness', label: 'Job Freshness' },
 ];
 
@@ -36,12 +33,6 @@ function sortJobs(jobs: Job[], sortBy: string): Job[] {
       return sorted.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
     case 'bestMatch':
       return sorted.sort((a, b) => (b.analysis?.finalScore || 0) - (a.analysis?.finalScore || 0));
-    case 'salaryHigh':
-      return sorted.sort((a, b) => (b.salary?.max || 0) - (a.salary?.max || 0));
-    case 'salaryLow':
-      return sorted.sort((a, b) => (a.salary?.min || Infinity) - (b.salary?.min || Infinity));
-    case 'companyScore':
-      return sorted.sort((a, b) => b.companyQualityScore - a.companyQualityScore);
     case 'freshness':
       return sorted.sort((a, b) => b.freshnessScore - a.freshnessScore);
     default:
@@ -83,6 +74,14 @@ function EmptyState({ hasResume }: { hasResume: boolean }) {
 export default function JobList({ groupedJobs, allJobs, isLoading }: JobListProps) {
   const { selectedJob, setSelectedJob, activeTab, savedJobs, resume, filters, setFilter } = useAppStore();
 
+  // Check if this is "All Jobs" mode (no resume and no filters)
+  const isAllJobsMode = !resume && !filters.search && 
+    (!filters.techStack || filters.techStack.length === 0) && 
+    !filters.location && 
+    !filters.country && 
+    (!filters.workMode || filters.workMode.length === 0) && 
+    !filters.experienceYears;
+
   if (isLoading) {
     return (
       <div className="space-y-3 p-4">
@@ -95,27 +94,6 @@ export default function JobList({ groupedJobs, allJobs, isLoading }: JobListProp
 
   return (
     <div>
-      {/* Sort Filter */}
-      <div className="px-4 py-3 border-b border-white/4">
-        <div className="flex items-center gap-2">
-          <ArrowUpDown className="w-4 h-4 text-white/40" />
-          <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">Sort By</span>
-          <div className="flex-1 max-w-xs">
-            <select 
-              value={filters.sortBy || 'recent'} 
-              onChange={(e) => setFilter('sortBy', e.target.value as 'recent' | 'bestMatch' | 'salaryHigh' | 'salaryLow' | 'companyScore' | 'freshness')} 
-              className="w-full bg-white/3 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/70 focus:outline-none focus:border-indigo-500/50 appearance-none transition-colors"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
       {/* Job Sections */}
       <div className="divide-y divide-white/4">
         {SECTION_CONFIG.map((section) => {
@@ -133,19 +111,27 @@ export default function JobList({ groupedJobs, allJobs, isLoading }: JobListProp
           
           const Icon = section.icon;
 
+          // Customize section header for "All Jobs" mode
+          const isAllJobsSection = isAllJobsMode && section.key === 'topMatches';
+          const sectionLabel = isAllJobsSection ? 'All Jobs' : section.label;
+          const sectionSublabel = isAllJobsSection ? 'Latest opportunities' : section.sublabel;
+          const sectionColor = isAllJobsSection ? 'text-blue-400' : section.color;
+          const sectionBg = isAllJobsSection ? 'bg-blue-500/10' : section.bg;
+          const sectionDot = isAllJobsSection ? 'bg-blue-400' : section.dot;
+
           return (
             <div key={section.key} className="p-4">
-              <div className={cn('flex items-center gap-2 mb-3 px-2.5 py-1.5 rounded-lg w-fit', section.bg)}>
-                <Icon className={cn('w-3.5 h-3.5', section.color)} />
-                <span className={cn('text-xs font-semibold', section.color)}>{section.label}</span>
-                <span className="text-xs text-white/30">{section.sublabel}</span>
-                <span className={cn('text-xs font-bold px-1.5 py-0.5 rounded-full', section.bg, section.color)}>
+              <div className={cn('flex items-center gap-2 mb-3 px-2.5 py-1.5 rounded-lg w-fit', sectionBg)}>
+                <Icon className={cn('w-3.5 h-3.5', sectionColor)} />
+                <span className={cn('text-xs font-semibold', sectionColor)}>{sectionLabel}</span>
+                <span className="text-xs text-white/30">{sectionSublabel}</span>
+                <span className={cn('text-xs font-bold px-1.5 py-0.5 rounded-full', sectionBg, sectionColor)}>
                   {jobs.length}
                 </span>
               </div>
               <div className="space-y-2">
                 {jobs.map((job, idx) => (
-                  <div key={job._id} style={{ animationDelay: `${idx * 40}ms` }} className="animate-fade-in-up">
+                  <div key={`${section.key}-${job._id}-${idx}`} style={{ animationDelay: `${idx * 40}ms` }} className="animate-fade-in-up">
                     <JobCard
                       job={job}
                       onClick={() => setSelectedJob(job)}

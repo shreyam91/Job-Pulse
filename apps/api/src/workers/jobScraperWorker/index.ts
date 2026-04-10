@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import cron from 'node-cron';
 import { connectDatabase } from '../../shared/database';
-import { redisConnection, QUEUE_NAMES, type ScraperJobData } from '../queues';
+import { getRedis, QUEUE_NAMES, type ScraperJobData } from '../queues';
 import { scraperService } from '../../modules/scraper/scraper.service';
 import { jobsService } from '../../modules/jobs/jobs.service';
 import { enqueueAIMatch } from '../queues';
@@ -38,7 +38,11 @@ async function processScraperJob(job: any): Promise<void> {
                     salary: rawJob.salary,
                     experienceYears: rawJob.experienceYears,
                 });
-                stored++;
+                if (saved) {
+                    stored++;
+                } else {
+                    skipped++; // Too old
+                }
                 job.updateProgress(Math.round((stored / rawJobs.length) * 100));
             } catch (err: any) {
                 if (err.code === 11000) {
@@ -50,7 +54,7 @@ async function processScraperJob(job: any): Promise<void> {
         }
 
         await job.updateProgress(100);
-        logger.info(`[ScraperWorker] Done. Stored: ${stored}, Skipped (duplicates): ${skipped}`);
+        logger.info(`[ScraperWorker] Done. Stored: ${stored}, Skipped (old/duplicates): ${skipped}`);
 
         await scraperService.closeBrowser();
     } catch (error) {
@@ -67,7 +71,7 @@ async function startWorker(): Promise<void> {
         QUEUE_NAMES.JOB_SCRAPER,
         processScraperJob,
         {
-            connection: redisConnection,
+            connection: getRedis() as any,
             concurrency: 1, // One scrape at a time
         }
     );

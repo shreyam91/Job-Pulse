@@ -41,7 +41,7 @@ function getRedis(): IORedis {
     return redisConnection;
 }
 
-export { redisConnection, redisAvailable };
+export { getRedis, redisAvailable };
 
 // Queue names
 export const QUEUE_NAMES = {

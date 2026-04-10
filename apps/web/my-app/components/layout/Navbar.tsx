@@ -17,6 +17,7 @@ export default function Navbar({ onGetStarted, className }: NavbarProps) {
         <div className="w-9 h-9 rounded-xl bg-linear-to-br from-indigo-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-indigo-600/20">
           <Sparkles className="w-5 h-5 text-white" />
         </div>
+        
         <div className="flex flex-col">
           <span className="text-lg font-bold text-white/90 tracking-tight leading-none">JobMatch</span>
           <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-1">AI Agent</span>
@@ -44,12 +45,12 @@ export default function Navbar({ onGetStarted, className }: NavbarProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        <Link 
+        {/* <Link 
           href="/auth" 
           className="hidden sm:block text-sm font-semibold text-white/60 hover:text-white transition-colors px-4"
         >
           Sign In
-        </Link>
+        </Link> */}
         {onGetStarted ? (
           <button
             onClick={onGetStarted}

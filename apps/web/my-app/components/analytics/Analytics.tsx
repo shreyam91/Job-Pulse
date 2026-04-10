@@ -64,6 +64,8 @@ export default function Analytics({ data, matchedToday = 0, avgMatchScore = 0, i
   const hybridCount = data.workModeBreakdown?.hybrid || 0;
   const onsiteCount = data.workModeBreakdown?.onsite || 0;
   const remoteRatio = Math.round((remoteCount / total) * 100);
+  const hybridRatio = Math.round((hybridCount / total) * 100);
+const onsiteRatio = Math.round((onsiteCount / total) * 100);
   const max = data.topCategories?.[0]?.count || 1;
 
   return (
@@ -72,20 +74,53 @@ export default function Analytics({ data, matchedToday = 0, avgMatchScore = 0, i
       <div className="grid grid-cols-2 gap-3">
         <MetricCard icon={BarChart3} label="Scraped Today" value={data.scrapedToday} iconBg="bg-indigo-600/15" iconColor="text-indigo-400" />
         <MetricCard icon={Briefcase} label="Active Jobs" value={data.totalJobs} iconBg="bg-blue-500/15" iconColor="text-blue-400" />
-        <MetricCard icon={TrendingUp} label="Jobs Matched" value={matchedToday} sub="for your resume" iconBg="bg-green-500/15" iconColor="text-green-400" />
+        <MetricCard icon={TrendingUp} label="Jobs Matched" value={matchedToday} iconBg="bg-green-500/15" iconColor="text-green-400" />
         <MetricCard icon={Star} label="Avg Match" value={avgMatchScore ? `${avgMatchScore}%` : '—'} iconBg="bg-yellow-500/15" iconColor="text-yellow-400" />
       </div>
 
       {/* Remote ratio donut */}
-      <div className="rounded-xl border border-white/[0.06] bg-[#13151c] p-4 flex items-center gap-4">
+      {/* <div className="rounded-xl border border-white/[0.06] bg-[#13151c] p-4 flex items-center gap-4">
         <div className="relative w-16 h-16 flex-shrink-0">
           <svg className="w-16 h-16 -rotate-90" viewBox="0 0 36 36">
             <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3.5" />
-            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#12b76a"
-              strokeWidth="3.5"
-              strokeDasharray={`${remoteRatio} ${100 - remoteRatio}`}
-              strokeLinecap="round"
-            />
+
+  <circle
+    cx="18"
+    cy="18"
+    r="15.9"
+    fill="none"
+    stroke="#34d399"
+    strokeWidth="3.5"
+    strokeDasharray={`${remoteRatio} ${100 - remoteRatio}`}
+    strokeDashoffset="0"
+    strokeLinecap="round"
+  />
+
+
+  <circle
+    cx="18"
+    cy="18"
+    r="15.9"
+    fill="none"
+    stroke="#fbbf24"
+    strokeWidth="3.5"
+    strokeDasharray={`${hybridRatio} ${100 - hybridRatio}`}
+    strokeDashoffset={`-${remoteRatio}`}
+    strokeLinecap="round"
+  />
+
+
+  <circle
+    cx="18"
+    cy="18"
+    r="15.9"
+    fill="none"
+    stroke="#60a5fa"
+    strokeWidth="3.5"
+    strokeDasharray={`${onsiteRatio} ${100 - onsiteRatio}`}
+    strokeDashoffset={`-${remoteRatio + hybridRatio}`}
+    strokeLinecap="round"
+  />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-xs font-bold text-green-400">{remoteRatio}%</span>
@@ -95,7 +130,7 @@ export default function Analytics({ data, matchedToday = 0, avgMatchScore = 0, i
           <p className="text-sm font-semibold text-white/70">Remote vs Onsite</p>
           <p className="text-xs text-white/30 mt-0.5">{remoteCount} remote · {onsiteCount} onsite · {hybridCount} hybrid</p>
         </div>
-      </div>
+      </div> */}
 
       {/* Work mode stacked bar */}
       {total > 0 && (

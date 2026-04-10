@@ -26,7 +26,7 @@ const PLANS = [
   },
   {
     name: 'Pro',
-    price: '₹ 99',
+    price: 'TBD',
     period: '/mo',
     description: 'For casual job seekers',
     features: [
@@ -45,7 +45,7 @@ const PLANS = [
   },
   {
     name: 'Pro Plus',
-    price: '₹ 199',
+    price: 'TBD',
     period: '/mo',
     description: 'For serious job seekers',
     features: [

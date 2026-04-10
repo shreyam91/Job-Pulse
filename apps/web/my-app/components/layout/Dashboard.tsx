@@ -36,21 +36,36 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
     setIsLoadingJobs(true);
     try {
       if (resume?.id) {
-        const grouped = await jobsApi.getRankedJobs(resume.id, { ...filters, limit: 20 });
+        // With resume: Use AI analysis to categorize jobs
+        const grouped = await jobsApi.getRankedJobs(resume.id, { ...filters, limit: 100 });
         const currentGrouped = useAppStore.getState().groupedJobs;
         
         let newGrouped = grouped;
         if (filters.page && filters.page > 1 && currentGrouped) {
+            // Create a Set of existing job IDs to prevent duplicates
+            const existingTopIds = new Set((currentGrouped.topMatches || []).map(job => job._id));
+            const existingGoodIds = new Set((currentGrouped.goodMatches || []).map(job => job._id));
+            const existingStretchIds = new Set((currentGrouped.stretchOpportunities || []).map(job => job._id));
+            
             newGrouped = {
-               topMatches: [...(currentGrouped.topMatches || []), ...grouped.topMatches],
-               goodMatches: [...(currentGrouped.goodMatches || []), ...grouped.goodMatches],
-               stretchOpportunities: [...(currentGrouped.stretchOpportunities || []), ...grouped.stretchOpportunities],
+               topMatches: [
+                 ...(currentGrouped.topMatches || []),
+                 ...(grouped.topMatches || []).filter(job => !existingTopIds.has(job._id))
+               ],
+               goodMatches: [
+                 ...(currentGrouped.goodMatches || []),
+                 ...(grouped.goodMatches || []).filter(job => !existingGoodIds.has(job._id))
+               ],
+               stretchOpportunities: [
+                 ...(currentGrouped.stretchOpportunities || []),
+                 ...(grouped.stretchOpportunities || []).filter(job => !existingStretchIds.has(job._id))
+               ],
             };
         }
         
         setGroupedJobs(newGrouped);
         const all = [...newGrouped.topMatches, ...newGrouped.goodMatches, ...newGrouped.stretchOpportunities];
-        setHasMore((grouped.topMatches.length + grouped.goodMatches.length + grouped.stretchOpportunities.length) >= 20);
+        setHasMore((grouped.topMatches.length + grouped.goodMatches.length + grouped.stretchOpportunities.length) >= 100);
         if (all.length > 0) {
           const avg = Math.round(all.reduce((s, j) => s + (j.analysis?.matchScore || 0), 0) / all.length);
           setAvgMatchScore(avg);
@@ -58,19 +73,66 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
           setAvgMatchScore(0);
         }
       } else {
-        const data = await jobsApi.getJobs({ ...filters, limit: 20 });
+        // No resume: Check if any filters are applied
+        const hasActiveFilters = filters.search || 
+          (filters.techStack && filters.techStack.length > 0) || 
+          filters.location || 
+          filters.country || 
+          (filters.workMode && filters.workMode.length > 0) || 
+          filters.experienceYears;
+        
+        const data = await jobsApi.getJobs({ ...filters, limit: 100 });
         const currentGrouped = useAppStore.getState().groupedJobs;
         
-        const newGrouped = {
-          topMatches: (filters.page && filters.page > 1 && currentGrouped) 
-            ? [...(currentGrouped.topMatches || []), ...(data.jobs || [])]
-            : (data.jobs || []),
-          goodMatches: [],
-          stretchOpportunities: []
-        };
+        let newGrouped;
+        if (filters.page && filters.page > 1 && currentGrouped) {
+          // Pagination logic
+          if (hasActiveFilters) {
+            // With filters: Show as "Good Matches" 
+            const existingGoodIds = new Set((currentGrouped.goodMatches || []).map(job => job._id));
+            newGrouped = {
+              topMatches: [],
+              goodMatches: [
+                ...(currentGrouped.goodMatches || []),
+                ...(data.jobs || []).filter(job => !existingGoodIds.has(job._id))
+              ],
+              stretchOpportunities: []
+            };
+          } else {
+            // No filters: Show as "All Jobs" in topMatches
+            const existingTopIds = new Set((currentGrouped.topMatches || []).map(job => job._id));
+            newGrouped = {
+              topMatches: [
+                ...(currentGrouped.topMatches || []),
+                ...(data.jobs || []).filter(job => !existingTopIds.has(job._id))
+              ],
+              goodMatches: [],
+              stretchOpportunities: []
+            };
+          }
+        } else {
+          // First page
+          if (hasActiveFilters) {
+            // With filters: Show as "Good Matches"
+            newGrouped = {
+              topMatches: [],
+              goodMatches: (data.jobs || []),
+              stretchOpportunities: []
+            };
+          } else {
+            // No filters: Show as "All Jobs"
+            newGrouped = {
+              topMatches: (data.jobs || []),
+              goodMatches: [],
+              stretchOpportunities: []
+            };
+          }
+        }
         
+        console.log('Dashboard - newGrouped:', newGrouped);
+        console.log('Dashboard - hasActiveFilters:', hasActiveFilters);
         setGroupedJobs(newGrouped);
-        setHasMore((data.jobs || []).length >= 20);
+        setHasMore((data.jobs || []).length >= 100);
         setAvgMatchScore(0);
       }
     } catch (err) {
@@ -102,22 +164,7 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
     }
   };
 
-  const handleScrapeJobs = async () => {
-    setIsRefreshing(true);
-    toast.loading('Scraping fresh jobs...', { id: 'scrape' });
-    try {
-      await jobsApi.refreshJobs();
-      await new Promise((r) => setTimeout(r, 1500));
-      await fetchRankedJobs();
-      toast.success('Jobs scraped successfully!', { id: 'scrape' });
-    } catch (err) {
-      console.error('Scrape failed:', err);
-      toast.error('Failed to scrape jobs. Check your API connection.', { id: 'scrape' });
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
+  
   const allJobs: Job[] = groupedJobs
     ? [...groupedJobs.topMatches, ...groupedJobs.goodMatches, ...groupedJobs.stretchOpportunities]
     : [];
@@ -128,21 +175,23 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: '#0a0b0f' }}>
       {/* Mobile sidebar overlay */}
-      {mobileSidebarOpen && (
+      {mobileSidebarOpen && dashboardType === 'jobs' && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
           <div className="absolute left-0 top-0 bottom-0 w-72 z-50">
-            <Sidebar onFilter={handleFilterJobs} onScrape={handleScrapeJobs} isRefreshing={isRefreshing} />
+            <Sidebar onFilter={handleFilterJobs} isRefreshing={isRefreshing} />
           </div>
         </div>
       )}
 
-      {/* Left: Sidebar */}
-      <div className="hidden lg:flex w-64 xl:w-72 flex-shrink-0 flex-col">
-        <Sidebar onFilter={handleFilterJobs} onScrape={handleScrapeJobs} isRefreshing={isRefreshing} />
-      </div>
+      {/* Left: Sidebar - Only show for Jobs */}
+      {dashboardType === 'jobs' && (
+        <div className="hidden lg:flex w-64 xl:w-72 flex-shrink-0 flex-col">
+          <Sidebar onFilter={handleFilterJobs} isRefreshing={isRefreshing} />
+        </div>
+      )}
 
-      {/* Center: Job List */}
+      {/* Center: Content Area */}
       <div className="flex-1 flex flex-col min-w-0 border-x border-white/[0.06]">
         <DashboardHeader
           dashboardType={dashboardType}
@@ -154,13 +203,17 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
           totalAnalysed={totalAnalysed}
           onMobileSidebarOpen={() => setMobileSidebarOpen(true)}
           onBackToLanding={onBackToLanding}
+          filters={filters}
+          onFilterChange={setFilter}
         />
 
-        <AIHintBar
-          resume={resume}
-          totalAnalysed={totalAnalysed}
-          isLoadingJobs={isLoadingJobs}
-        />
+        {dashboardType === 'jobs' && (
+          <AIHintBar
+            resume={resume}
+            totalAnalysed={totalAnalysed}
+            isLoadingJobs={isLoadingJobs}
+          />
+        )}
 
         {/* Job List / Interview View */}
         <div className="flex-1 overflow-y-auto">
@@ -178,7 +231,7 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
               onFilterChange={setFilter}
             />
           ) : (
-            <InterviewContent
+            <InterviewContent 
               isInterviewActive={isInterviewActive}
               onInterviewStart={() => setIsInterviewActive(true)}
             />
@@ -186,19 +239,21 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
         </div>
       </div>
 
-      {/* Right: Detail / Analytics Panel (Desktop) */}
-      <RightPanel
-        panelTab={panelTab}
-        onPanelTabChange={setPanelTab}
-        dashboardType={dashboardType}
-        analytics={analytics}
-        totalAnalysed={totalAnalysed}
-        avgMatchScore={avgMatchScore}
-        isInterviewActive={isInterviewActive}
-      />
+      {/* Right: Detail / Analytics Panel (Desktop) - Only show for Jobs */}
+      {dashboardType === 'jobs' && (
+        <RightPanel
+          panelTab={panelTab}
+          onPanelTabChange={setPanelTab}
+          dashboardType={dashboardType}
+          analytics={analytics}
+          totalAnalysed={totalAnalysed}
+          avgMatchScore={avgMatchScore}
+          isInterviewActive={isInterviewActive}
+        />
+      )}
 
       {/* Mobile Job Detail Sheet */}
-      <MobileJobSheet />
+      {dashboardType === 'jobs' && <MobileJobSheet />}
     </div>
   );
 }

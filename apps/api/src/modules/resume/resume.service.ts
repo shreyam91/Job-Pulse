@@ -9,15 +9,16 @@ import { unique } from '../../shared/utils';
 
 // Common tech skills dictionary
 const TECH_SKILLS = [
-    'react', 'nextjs', 'next.js', 'vue', 'angular', 'svelte', 'typescript', 'javascript', 'html', 'css',
-    'node.js', 'nodejs', 'express', 'fastapi', 'django', 'flask', 'rails', 'spring', 'laravel',
-    'python', 'java', 'go', 'golang', 'rust', 'c++', 'c#', 'php', 'ruby', 'kotlin', 'swift',
-    'aws', 'gcp', 'azure', 'docker', 'kubernetes', 'terraform', 'ansible', 'jenkins', 'ci/cd',
-    'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'rabbitmq', 'sqlite',
-    'graphql', 'rest', 'grpc', 'websocket', 'oauth', 'jwt',
-    'pytorch', 'tensorflow', 'langchain', 'openai', 'llm', 'machine learning', 'ml', 'ai',
-    'git', 'github', 'gitlab', 'jira', 'figma', 'linux', 'bash', 'zsh',
+    'react', 'nextjs', 'next.js', 'vue', 'angular', 'svelte', 'typescript', 'javascript', 'html', 'css', 'tailwind', 'sass', 'bootstrap',
+    'node.js', 'nodejs', 'express', 'fastapi', 'django', 'flask', 'rails', 'spring', 'laravel', 'nest.js', 'nestjs', 'graphql',
+    'python', 'java', 'go', 'golang', 'rust', 'c++', 'c#', 'php', 'ruby', 'kotlin', 'swift', 'scala', 'dart', 'flutter',
+    'aws', 'gcp', 'azure', 'docker', 'kubernetes', 'terraform', 'ansible', 'jenkins', 'ci/cd', 'github actions', 'nginx',
+    'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'rabbitmq', 'sqlite', 'dynamodb', 'firebase',
+    'graphql', 'rest', 'grpc', 'websocket', 'oauth', 'jwt', 'microservices', 'serverless',
+    'pytorch', 'tensorflow', 'langchain', 'openai', 'llm', 'machine learning', 'ml', 'ai', 'natural language processing', 'nlp',
+    'git', 'github', 'gitlab', 'jira', 'figma', 'linux', 'bash', 'zsh', 'docker', 'aws lambda',
 ];
+
 
 const ROLE_PATTERNS = [
     /software engineer/i, /frontend developer/i, /backend developer/i,

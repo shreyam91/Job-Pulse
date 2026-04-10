@@ -1,6 +1,6 @@
 import { Worker } from 'bullmq';
 import { connectDatabase } from '../../shared/database';
-import { redisConnection, QUEUE_NAMES, type AIMatchJobData } from '../queues';
+import { getRedis, QUEUE_NAMES, type AIMatchJobData } from '../queues';
 import { jobsService } from '../../modules/jobs/jobs.service';
 import { resumeService } from '../../modules/resume/resume.service';
 import { aiMatchService } from '../../modules/ai/aiMatch.service';
@@ -50,7 +50,7 @@ async function startWorker(): Promise<void> {
         QUEUE_NAMES.AI_MATCH,
         processAIMatchJob,
         {
-            connection: redisConnection,
+            connection: getRedis() as any,
             concurrency: 3, // Process 3 AI analyses in parallel
             limiter: {
                 max: 10,      // Max 10 jobs per duration
