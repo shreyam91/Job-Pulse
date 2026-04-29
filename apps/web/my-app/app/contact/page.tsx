@@ -59,7 +59,7 @@ export default function ContactPage() {
               <Sparkles className="absolute -right-4 -top-4 w-24 h-24 text-indigo-500/5 group-hover:rotate-12 transition-transform duration-700" />
               <h4 className="text-sm font-bold mb-2">Technical Support</h4>
               <p className="text-xs text-white/40 leading-relaxed mb-4">
-                Found a bug or need help with your AI interview session? Our tech team is online 24/7.
+                Found a bug or need help with your account? Our tech team is online 24/7.
               </p>
               {/* <button className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-2">
                 Open Support Ticket <Send className="w-3 h-3" />

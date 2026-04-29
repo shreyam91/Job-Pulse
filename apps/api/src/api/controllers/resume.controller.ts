@@ -34,6 +34,7 @@ export const resumeController = {
                     experienceYears: resume.parsedData.experienceYears,
                     education: resume.parsedData.education,
                     summary: resume.parsedData.summary,
+                    rawText: resume.parsedData.rawText,
                 },
                 uploadedAt: resume.uploadedAt,
             },

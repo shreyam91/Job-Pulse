@@ -102,7 +102,7 @@ export default function TermsPage() {
             <div>
               <h3 className="text-lg font-semibold mb-3 text-indigo-400">Description of Service</h3>
               <p className="text-white/60 leading-relaxed text-sm mb-4">
-                JobMatch AI provides AI-powered job matching, resume analysis, and interview preparation services. 
+                JobMatch AI provides AI-powered job matching and resume analysis services. 
                 We use advanced machine learning algorithms to help job seekers find relevant opportunities and improve their chances of success.
               </p>
               <ul className="space-y-2 text-white/60 text-sm">
@@ -116,7 +116,7 @@ export default function TermsPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-                  <span>Mock interview simulations with AI feedback</span>
+
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />

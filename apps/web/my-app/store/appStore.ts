@@ -11,6 +11,7 @@ interface AppState {
     setSelectedJob: (job: Job | null) => void;
     filters: JobFilters;
     setFilter: <K extends keyof JobFilters>(key: K, value: JobFilters[K]) => void;
+    setFilterSimple: (filters: Partial<JobFilters>) => void;
     resetFilters: () => void;
     savedJobs: SavedJob[];
     toggleSaveJob: (jobId: string) => void;
@@ -51,6 +52,13 @@ export const useAppStore = create<AppState>()(
                     ...state.filters, 
                     [key]: value,
                     ...(key !== 'page' ? { page: 1 } : {})
+                } 
+            })),
+            setFilterSimple: (filters) => set((state) => ({ 
+                filters: { 
+                    ...state.filters, 
+                    ...filters,
+                    ...(filters.page === undefined ? { page: 1 } : {})
                 } 
             })),
             resetFilters: () => set({ filters: DEFAULT_FILTERS }),

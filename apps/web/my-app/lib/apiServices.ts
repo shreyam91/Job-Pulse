@@ -81,4 +81,9 @@ export const resumeApi = {
     delete: async (id: string): Promise<void> => {
         await api.delete(`/resume/${id}`);
     },
+
+    optimize: async (resumeText: string, jobDescription: string) => {
+        const res = await api.post('/resume/optimize', { resume: resumeText, jobDescription });
+        return res.data.data;
+    },
 };

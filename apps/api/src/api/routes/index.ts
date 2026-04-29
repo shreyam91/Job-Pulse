@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { jobsController } from '../controllers/jobs.controller';
 import { resumeController } from '../controllers/resume.controller';
 import { uploadMiddleware } from '../middleware/upload';
+import { resumeOptimizerController } from '../../services/resume-optimizer/controller';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.post('/jobs/refresh', jobsController.refreshJobs);
 router.post('/resume/upload', uploadMiddleware.single('resume'), resumeController.uploadResume);
 router.get('/resume/active', resumeController.getActiveResume);
 router.delete('/resume/:id', resumeController.deleteResume);
+router.post('/resume/optimize', resumeOptimizerController.optimize);
 
 export default router;

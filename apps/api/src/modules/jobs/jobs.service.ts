@@ -236,7 +236,7 @@ export class JobsService {
             .limit(100)
             .lean();
 
-        // 4. Transform to include analysis (or mock analysis for fallback)
+        // 4. Transform to include analysis
         let results = jobs.map((job) => {
             const analysis = analysisMap.get(String(job._id));
             if (analysis) {
@@ -257,19 +257,43 @@ export class JobsService {
             } else {
                 // Keyword-based fallback analysis for jobs not yet processed by AI
                 const jobSkillsLower = (job.skills || []).map(s => s.toLowerCase());
+                const jobDescriptionLower = (job.description || '').toLowerCase();
+                const resumeRawTextLower = (resume.parsedData?.rawText || '').toLowerCase();
                 const resumeSkillsLower = resumeSkills.map(s => s.toLowerCase());
-                const matched = (job.skills || []).filter(s => resumeSkillsLower.includes(s.toLowerCase()));
                 
-                // Simple score for pending jobs
-                const matchScore = Math.round((matched.length / Math.max(job.skills?.length || 1, 1)) * 100);
+                // Find matched skills: skills in resume that appear in job.skills or job description
+                const matched = resumeSkills.filter(s => {
+                    const sl = s.toLowerCase();
+                    return jobSkillsLower.includes(sl) || jobDescriptionLower.includes(sl);
+                });
                 
+                // Missing skills: skills explicitly required in job.skills but not in resume
+                const missing = (job.skills || []).filter(s => {
+                    const sl = s.toLowerCase();
+                    return !resumeSkillsLower.includes(sl) && !resumeRawTextLower.includes(sl);
+                });
+
+                const skillsAlignment = Math.min(100, Math.round((matched.length / Math.max(job.skills?.length || 1, 1)) * 100));
+                const matchScore = skillsAlignment;
+
                 return {
                     ...job,
                     analysis: {
                         matchScore,
-                        finalScore: matchScore * 0.8, // Slightly lower weight for non-AI scores
-                        pending: true,
+                        atsScore: Math.min(100, Math.round(skillsAlignment * 0.8)),
+                        finalScore: Math.min(100, matchScore * 0.8), // Slightly lower weight for non-AI scores
                         matchedSkills: matched,
+                        missingSkills: missing,
+                        strengthSummary: matched.length > 0 ? `Matches ${matched.length} key skills.` : 'Basic match.',
+                        aiExplanation: 'AI analysis is currently pending. This is a preliminary keyword-based score.',
+                        improvementSuggestion: 'Upload a detailed resume and wait for full AI analysis.',
+                        matchBreakdown: {
+                            skillsAlignment,
+                            experienceFit: 50,
+                            techStackMatch: skillsAlignment,
+                            roleRelevance: Math.round(skillsAlignment * 0.9),
+                        },
+                        pending: true,
                     }
                 };
             }

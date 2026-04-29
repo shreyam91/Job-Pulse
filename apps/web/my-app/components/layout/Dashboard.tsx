@@ -19,9 +19,9 @@ interface DashboardProps {
 
 export default function Dashboard({ onBackToLanding }: DashboardProps) {
   const {
-    resume, filters, setFilter, groupedJobs, setGroupedJobs, selectedJob, setSelectedJob,
+    resume, filters, setFilterSimple, setFilter, setGroupedJobs, selectedJob, setSelectedJob,
     isLoadingJobs, setIsLoadingJobs, activeTab, setActiveTab,
-    savedJobs, applicationStatuses, dashboardType, setDashboardType,
+    savedJobs, applicationStatuses, dashboardType, setDashboardType, groupedJobs,
   } = useAppStore();
 
   const [panelTab, setPanelTab] = useState<'jobs' | 'analytics'>('jobs');
@@ -204,7 +204,7 @@ export default function Dashboard({ onBackToLanding }: DashboardProps) {
           onMobileSidebarOpen={() => setMobileSidebarOpen(true)}
           onBackToLanding={onBackToLanding}
           filters={filters}
-          onFilterChange={setFilter}
+          onFilterChange={setFilterSimple}
         />
 
         {dashboardType === 'jobs' && (

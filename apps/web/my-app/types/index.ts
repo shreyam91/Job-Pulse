@@ -59,6 +59,7 @@ export interface ParsedResume {
     experienceYears: number;
     education: string[];
     summary?: string;
+    rawText?: string;
 }
 
 export interface JobFilters {

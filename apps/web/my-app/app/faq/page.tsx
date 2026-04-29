@@ -68,7 +68,7 @@ const FAQ_ITEMS = [
   {
     category: 'AI Features',
     question: 'What is the AI Mock Interview feature?',
-    answer: 'The AI Mock Interview feature provides realistic interview practice with our conversational AI. It analyzes your resume, generates relevant questions, and provides feedback on your responses to help you prepare for actual interviews.'
+    answer: 'The AI service provides job matching, resume analysis, and career insights to help you land your dream job.'
   },
   {
     category: 'AI Features',
@@ -78,7 +78,7 @@ const FAQ_ITEMS = [
   {
     category: 'Pricing & Plans',
     question: 'Is there a free trial available?',
-    answer: 'Yes! We offer a free plan with 10 job matches per day, basic AI analysis, and one mock interview session. This allows you to experience the platform before upgrading to a paid plan.'
+    answer: 'Yes! We offer a free plan with 10 job matches per day and basic AI analysis. This allows you to experience the platform before upgrading to a paid plan.'
   },
   {
     category: 'Pricing & Plans',

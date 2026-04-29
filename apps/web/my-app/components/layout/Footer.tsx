@@ -9,7 +9,7 @@ const FOOTER_LINKS = [
     title: 'Product',
     links: [
       { label: 'Job Agent', href: '/job-agent' },
-      { label: 'Interview Agent', href: '/interview-agent' },
+
       { label: 'Pricing', href: '/pricing' },
       { label: 'Features', href: '/#features' },
     ]

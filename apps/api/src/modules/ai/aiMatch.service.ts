@@ -134,18 +134,24 @@ export class AIMatchService {
         const jobSkillsLower = (job.skills || []).map((s) => s.toLowerCase());
         const resumeSkillsLower = (resume.skills || []).map((s) => s.toLowerCase());
 
-        // Only count EXACT matches, not partial matches
-        const matchedSkills = (resume.skills || []).filter((s) =>
-            jobSkillsLower.includes(s.toLowerCase())
-        );
-        const missingSkills = (job.skills || []).filter((s) =>
-            !resumeSkillsLower.includes(s.toLowerCase())
-        );
+        const jobDescriptionLower = job.description.toLowerCase();
+        
+        // Find skills that are explicitly in job.skills OR found in the job description
+        const matchedSkills = (resume.skills || []).filter((s) => {
+            const skillLower = s.toLowerCase();
+            return jobSkillsLower.includes(skillLower) || jobDescriptionLower.includes(skillLower);
+        });
+
+        // Missing skills are those explicitly required but not found in resume
+        const missingSkills = (job.skills || []).filter((s) => {
+            const skillLower = s.toLowerCase();
+            return !resumeSkillsLower.includes(skillLower) && !resume.rawText.toLowerCase().includes(skillLower);
+        });
 
         // Be strict about matching - penalize heavily for missing core skills
-        const skillsAlignment = Math.round(
+        const skillsAlignment = Math.min(100, Math.round(
             (matchedSkills.length / Math.max(job.skills?.length || 1, 1)) * 100
-        );
+        ));
 
         // Calculate experience fit based on years vs role requirements
         const experienceFit = resume.experienceYears >= 5 ? 85 : 

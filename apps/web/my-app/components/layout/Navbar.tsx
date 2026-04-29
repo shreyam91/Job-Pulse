@@ -30,7 +30,7 @@ export default function Navbar({ onGetStarted, className }: NavbarProps) {
           { label: 'About', href: '/about' },
           { label: 'Pricing', href: '/pricing' },
           // { label: 'Job Agent', href: '/job-agent' },
-          // { label: 'Interview Agent', href: '/interview-agent' },
+
           // { label: 'Careers', href: '/careers' },
           { label: 'Contact', href: '/contact' },
         ].map((link) => (

@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import {
   X, ExternalLink, MapPin, Briefcase, Clock, Bookmark, BookmarkCheck,
-  ChevronRight, Mail, Check, Zap, Target, Brain
+  ChevronRight, Mail, Check, Zap, Target, Brain,
+  Sparkles
 } from 'lucide-react';
 import type { Job, ApplicationStatus } from '@/types';
 import { useAppStore } from '@/store/appStore';
 import { jobsApi } from '@/lib/apiServices';
 import ColdEmailModal from '../email/ColdEmailModal';
+import OptimizeResumeModal from '../resume/OptimizeResumeModal';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -40,6 +42,7 @@ function ProgressBar({ label, value, color = '#6172f3' }: { label: string; value
 export default function JobDetailPanel() {
   const { selectedJob, setSelectedJob, resume, toggleSaveJob, isJobSaved, applicationStatuses, setApplicationStatus } = useAppStore();
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showOptimizeModal, setShowOptimizeModal] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
 
   if (!selectedJob) {
@@ -113,6 +116,13 @@ export default function JobDetailPanel() {
             <Mail className="w-4 h-4" />
             Cold Email
           </button>
+          <button
+            onClick={() => setShowOptimizeModal(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-sm font-medium transition-colors border border-emerald-500/20"
+          >
+            <Sparkles className="w-4 h-4" />
+            Optimize Resume
+          </button>
         </div>
 
         {/* Status tracker */}
@@ -169,31 +179,35 @@ export default function JobDetailPanel() {
             </div>
 
             {/* AI Explanation */}
-            <div className="rounded-xl border border-white/[0.06] bg-[#13151c] p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg bg-indigo-600/20 flex items-center justify-center">
-                  <Brain className="w-4 h-4 text-indigo-400" />
+            {analysis && (
+              <div className="rounded-xl border border-white/[0.06] bg-[#13151c] p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-600/20 flex items-center justify-center">
+                    <Brain className="w-4 h-4 text-indigo-400" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-white/80">Why This Job Matches You</h4>
                 </div>
-                <h4 className="text-sm font-semibold text-white/80">Why This Job Matches You</h4>
+                <p className="text-xs text-white/50 leading-relaxed">{analysis.aiExplanation}</p>
               </div>
-              <p className="text-xs text-white/50 leading-relaxed">{analysis.aiExplanation}</p>
-            </div>
+            )}
 
             {/* Match Breakdown */}
-            <div className="rounded-xl border border-white/[0.06] bg-[#13151c] p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <Target className="w-4 h-4 text-purple-400" />
+            {analysis && (
+              <div className="rounded-xl border border-white/[0.06] bg-[#13151c] p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                    <Target className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-white/80">Match Breakdown</h4>
                 </div>
-                <h4 className="text-sm font-semibold text-white/80">Match Breakdown</h4>
+                <div className="space-y-3.5">
+                  <ProgressBar label="Skills Alignment" value={analysis.matchBreakdown?.skillsAlignment || 0} color={breakdownColor(analysis.matchBreakdown?.skillsAlignment || 0)} />
+                  <ProgressBar label="Experience Fit" value={analysis.matchBreakdown?.experienceFit || 0} color={breakdownColor(analysis.matchBreakdown?.experienceFit || 0)} />
+                  <ProgressBar label="Tech Stack Match" value={analysis.matchBreakdown?.techStackMatch || 0} color={breakdownColor(analysis.matchBreakdown?.techStackMatch || 0)} />
+                  <ProgressBar label="Role Relevance" value={analysis.matchBreakdown?.roleRelevance || 0} color={breakdownColor(analysis.matchBreakdown?.roleRelevance || 0)} />
+                </div>
               </div>
-              <div className="space-y-3.5">
-                <ProgressBar label="Skills Alignment" value={analysis.matchBreakdown.skillsAlignment} color={breakdownColor(analysis.matchBreakdown.skillsAlignment)} />
-                <ProgressBar label="Experience Fit" value={analysis.matchBreakdown.experienceFit} color={breakdownColor(analysis.matchBreakdown.experienceFit)} />
-                <ProgressBar label="Tech Stack Match" value={analysis.matchBreakdown.techStackMatch} color={breakdownColor(analysis.matchBreakdown.techStackMatch)} />
-                <ProgressBar label="Role Relevance" value={analysis.matchBreakdown.roleRelevance} color={breakdownColor(analysis.matchBreakdown.roleRelevance)} />
-              </div>
-            </div>
+            )}
 
             {/* Skills */}
             <div className="grid grid-cols-2 gap-3">
@@ -203,10 +217,10 @@ export default function JobDetailPanel() {
                   <h4 className="text-xs font-semibold text-green-400">Matched Skills</h4>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {analysis.matchedSkills.slice(0, 8).map((skill) => (
+                  {analysis?.matchedSkills?.slice(0, 8).map((skill) => (
                     <span key={skill} className="px-2 py-0.5 rounded-md bg-green-500/10 text-green-300 text-xs border border-green-500/20 font-mono">{skill}</span>
                   ))}
-                  {!analysis.matchedSkills.length && <p className="text-xs text-green-700">None detected</p>}
+                  {!analysis?.matchedSkills?.length && <p className="text-xs text-green-700">None detected</p>}
                 </div>
               </div>
               <div className="rounded-xl border border-red-500/20 bg-red-500/[0.04] p-4">
@@ -215,22 +229,22 @@ export default function JobDetailPanel() {
                   <h4 className="text-xs font-semibold text-red-400">Missing Skills</h4>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {analysis.missingSkills.slice(0, 8).map((skill) => (
+                  {analysis?.missingSkills?.slice(0, 8).map((skill) => (
                     <span key={skill} className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-300 text-xs border border-red-500/20 font-mono">{skill}</span>
                   ))}
-                  {!analysis.missingSkills.length && <p className="text-xs text-red-700">None detected</p>}
+                  {!analysis?.missingSkills?.length && <p className="text-xs text-red-700">None detected</p>}
                 </div>
               </div>
             </div>
 
             {/* Improvement tip */}
-            {analysis.improvementSuggestion && (
+            {analysis?.improvementSuggestion && (
               <div className="rounded-xl border border-indigo-500/20 bg-indigo-600/[0.05] p-4">
                 <div className="flex items-start gap-2">
                   <Zap className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-xs font-semibold text-indigo-400 mb-1">Improvement Tip</h4>
-                    <p className="text-xs text-white/50 leading-relaxed">{analysis.improvementSuggestion}</p>
+                    <p className="text-xs text-white/50 leading-relaxed">{analysis?.improvementSuggestion}</p>
                   </div>
                 </div>
               </div>
@@ -259,6 +273,9 @@ export default function JobDetailPanel() {
 
       {showEmailModal && (
         <ColdEmailModal job={job} resumeId={resume?.id || ''} onClose={() => setShowEmailModal(false)} />
+      )}
+      {showOptimizeModal && (
+        <OptimizeResumeModal job={job} onClose={() => setShowOptimizeModal(false)} />
       )}
     </div>
   );

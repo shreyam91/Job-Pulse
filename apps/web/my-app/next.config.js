@@ -1,12 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Production optimizations
-  swcMinify: true,
   poweredByHeader: false,
   
   // Image optimization
   images: {
-    domains: ['localhost', process.env.NEXT_PUBLIC_API_URL?.replace('https://', '').replace('http://', '')].filter(Boolean),
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      ...(process.env.NEXT_PUBLIC_API_URL 
+        ? [{
+            protocol: process.env.NEXT_PUBLIC_API_URL.startsWith('https') ? 'https' : 'http',
+            hostname: process.env.NEXT_PUBLIC_API_URL.replace('https://', '').replace('http://', '').split('/')[0],
+          }]
+        : [])
+    ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60 * 60 * 24, // 24 hours
   },
@@ -84,6 +94,9 @@ const nextConfig = {
     }
     return config;
   },
+  
+  // Explicitly allow Turbopack with custom Webpack config
+  turbopack: {},
 };
 
 module.exports = nextConfig;
