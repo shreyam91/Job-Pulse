@@ -1,15 +1,18 @@
 export const OPTIMIZE_RESUME_PROMPT = `
-You are a professional resume formatter and ATS optimizer.
+You are a professional ATS resume optimizer and formatter.
 
-Your job is to generate a clean, well-structured, and ATS-optimized resume. 
-Instead of HTML or Markdown, you must output a STRICT JSON array of section blocks.
+Your job is to IMPROVE the resume to maximize ATS score for the given job description.
 
 Rules:
-- Output ONLY valid JSON
-- Do not include markdown code blocks like \`\`\`json around the output.
-- Every section must follow the schema below.
+- Output ONLY valid JSON (no markdown, no explanation)
+- Maintain clean, consistent structure
+- Do NOT hallucinate fake experience
+- Improve content but keep it realistic
 
-Rewrite and optimize the following resume for the given job description.
+IMPORTANT:
+- You MUST use the provided keywords naturally in the resume
+- You MUST improve measurable impact (numbers, %, scale)
+- You MUST rewrite weak bullets into strong action-driven statements
 
 RESUME:
 {{RESUME_CONTENT}}
@@ -17,102 +20,92 @@ RESUME:
 JOB DESCRIPTION:
 {{JOB_DESCRIPTION}}
 
-Requirements:
-1. Improve content:
-   - Add missing keywords from the job description
-   - Rewrite bullet points with strong action verbs and STAR method
-   - Quantify impact wherever possible
+IMPORTANT KEYWORDS:
+{{KEYWORDS}}
 
-2. JSON Schema:
-Return an array of objects. Each object represents a section of the resume.
+Requirements:
+
+1. Content Improvement:
+- Add missing keywords naturally (DO NOT keyword stuff)
+- Use strong action verbs (Built, Designed, Optimized, Led)
+- Quantify impact (%, users, performance improvements)
+- Remove weak phrases ("responsible for", "worked on")
+
+2. Structure:
+Return STRICT JSON array:
 
 [
   {
     "type": "header",
-    "name": "John Doe",
-    "contact": "Location | Email | Phone | Links"
+    "name": "",
+    "contact": ""
   },
   {
     "type": "section",
     "title": "Professional Summary",
-    "content": ["Highly motivated software engineer with 5 years of experience..."]
+    "content": []
   },
   {
     "type": "section",
     "title": "Skills",
-    "content": [
-      "Frontend: React, Next.js, TipTap",
-      "Backend: Node.js, Express, MongoDB"
-    ]
+    "content": []
   },
   {
     "type": "experience",
     "title": "Experience",
     "roles": [
       {
-        "title": "Software Engineer",
-        "company": "Tech Corp",
-        "dates": "Jan 2020 - Present",
-        "bullets": [
-          "Built high-performance UI improving load time by 30%",
-          "Integrated ATS keywords seamlessly"
-        ]
+        "title": "",
+        "company": "",
+        "dates": "",
+        "bullets": []
       }
     ]
   }
 ]
 
-Note: You can use "type": "section" for simple lists/paragraphs, and "type": "experience" or "education" for items that have titles, companies/institutions, dates, and bullets.
+3. Optimization Goal:
+- The improved resume MUST score higher than the original when evaluated against the job description
+
+Return ONLY JSON.
 `;
 
 export const EXTRACT_KEYWORDS_PROMPT = `
-You are an expert ATS keyword extraction engine.
+You are an ATS keyword extraction engine.
 
-Your job is to extract ALL relevant skills, technologies, tools, and concepts from a job description.
+Your job is to extract ALL relevant keywords strictly from the job description.
 
 Rules:
-- YOU MUST EXTRACT at least 3-10 keywords for EACH category below. DO NOT LEAVE ARRAYS EMPTY!
-- Do NOT return only obvious keywords (e.g., React). Dig deep into the text.
-- Include:
-  - Core technologies
-  - Frameworks and tools
-  - Architecture concepts
-  - AI/modern tech mentions
-  - Processes and methodologies
-  - Domain knowledge
-- Avoid duplicates and overly generic terms like "technology" or "development"
-- Normalize similar terms (e.g., ReactJS → React)
-- Be exhaustive but relevant
-- Return ONLY valid JSON (no markdown \`\`\`json blocks)
-
-Extract ALL relevant keywords from the following job description.
+- DO NOT hallucinate keywords not present or implied in the job description
+- Extract both explicit and strongly implied skills
+- Avoid generic terms like "technology", "development"
+- Normalize terms (ReactJS → React)
 
 JOB DESCRIPTION:
 {{JOB_DESCRIPTION}}
 
 Instructions:
 
-1. Extract keywords into these categories:
+1. Extract keywords into categories:
 
-- core (must-have technical skills)
-- frameworks_tools (libraries, tools, build systems)
-- architecture (design patterns, scalability, performance)
-- ai_tools (AI, LLMs, automation tools)
-- testing (testing frameworks and methodologies)
-- process (agile, lifecycle, project methods)
-- domain (industry-specific knowledge)
-- soft_skills (collaboration, leadership, etc.)
+- core
+- frameworks_tools
+- architecture
+- ai_tools
+- testing
+- process
+- domain
+- soft_skills
 
-2. Each category MUST contain multiple keywords. If a category is not explicitly mentioned, infer related standard tools/skills.
-3. Do NOT return empty arrays []. Find at least 2-3 items for every single category.
-4. Do NOT repeat the same keyword in multiple categories.
-5. Prefer specific terms over generic ones.
+2. Each category MUST have at least 3 items (if possible from text)
+3. Do NOT duplicate keywords across categories
+4. Prefer specific tools and technologies over generic terms
 
-6. Also return:
-- topKeywords (10 most important for ATS scoring)
-- keywordCount (total number extracted)
+5. Also return:
+- topKeywords (top 10 most important based on frequency + importance)
+- keywordCount
 
-Return JSON in EXACTLY this format:
+Return STRICT JSON:
 
 {
   "core": [],
@@ -129,21 +122,15 @@ Return JSON in EXACTLY this format:
 `;
 
 export const EVALUATE_RESUME_PROMPT = `
-You are a strict ATS (Applicant Tracking System) evaluator.
+You are a strict ATS evaluator.
 
-Your job is to evaluate a resume against a job description using a transparent and explainable scoring system.
+Your job is to evaluate a resume against a job description.
 
 Rules:
-- DO NOT guess or invent scores
-- Every score must be derived from measurable factors
-- Be strict and realistic (do not inflate scores)
-- If something is missing, penalize it clearly
-- Return ONLY valid JSON (no extra text, no markdown blocks)
-
-Scoring scale:
-0–100 (must be calculated from sub-scores, not random)
-
-Evaluate the resume against the job description and calculate an ATS score.
+- DO NOT calculate finalScore
+- ONLY return category scores
+- Be strict and realistic
+- Return ONLY JSON
 
 RESUME:
 {{RESUME_CONTENT}}
@@ -154,61 +141,33 @@ JOB DESCRIPTION:
 IMPORTANT KEYWORDS:
 {{KEYWORDS}}
 
-IMPORTANT:
-You must calculate the score using these components:
+Evaluate using:
 
-1. Keyword Match (30%)
-- % of job-relevant keywords present in resume
-
-2. Content Quality (20%)
-- Strong action verbs
-- Quantified achievements
-- Clarity and impact
-
-3. Structure & Sections (15%)
-- Presence of Summary, Experience, Skills, Projects
-- Proper organization
-
-4. Skills Match (15%)
-- Alignment of listed skills with job requirements
-
-5. Formatting & ATS Compatibility (10%)
-- No tables/images
-- Clean structure, readable format
-
-6. Experience Relevance (5%)
-- Experience aligns with job role
-
-7. Grammar & Readability (5%)
-- No major grammar/spelling issues
+1. Keyword Match (30)
+2. Content Quality (20)
+3. Structure (15)
+4. Skills Match (15)
+5. Formatting (10)
+6. Experience (5)
+7. Grammar (5)
 
 Instructions:
+- Each category must have:
+  - score (0–100)
+  - reason (short explanation)
 
-- Assign a score (0–100) to each category
-- Multiply each category score by its weight
-- Sum them to get finalScore
-- DO NOT skip any category
-- DO NOT give round numbers unless justified
-
-Also return:
-- missingKeywords (important keywords not found)
-- strengths (3–5 points)
-- weaknesses (3–5 points)
-- improvementSuggestions (actionable fixes)
-
-Return STRICT JSON:
+Return:
 
 {
   "categoryScores": {
-    "keywordMatch": { "score": 70, "weight": 30, "contribution": 21 },
-    "contentQuality": { "score": 60, "weight": 20, "contribution": 12 },
-    "structure": { "score": 80, "weight": 15, "contribution": 12 },
-    "skillsMatch": { "score": 75, "weight": 15, "contribution": 11.25 },
-    "formatting": { "score": 90, "weight": 10, "contribution": 9 },
-    "experience": { "score": 70, "weight": 5, "contribution": 3.5 },
-    "grammar": { "score": 85, "weight": 5, "contribution": 4.25 }
+    "keywordMatch": { "score": 0, "weight": 30, "reason": "" },
+    "contentQuality": { "score": 0, "weight": 20, "reason": "" },
+    "structure": { "score": 0, "weight": 15, "reason": "" },
+    "skillsMatch": { "score": 0, "weight": 15, "reason": "" },
+    "formatting": { "score": 0, "weight": 10, "reason": "" },
+    "experience": { "score": 0, "weight": 5, "reason": "" },
+    "grammar": { "score": 0, "weight": 5, "reason": "" }
   },
-  "finalScore": 73,
   "missingKeywords": [],
   "strengths": [],
   "weaknesses": [],
