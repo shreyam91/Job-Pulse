@@ -26,5 +26,9 @@ router.post('/resume/upload', uploadMiddleware.single('resume'), resumeControlle
 router.get('/resume/active', resumeController.getActiveResume);
 router.delete('/resume/:id', resumeController.deleteResume);
 router.post('/resume/optimize', resumeOptimizerController.optimize);
+import atsRouter from './ats';
+
+// ─── ATS Scoring ─────────────────────────────────────────────────────────────
+router.use('/ats', atsRouter);
 
 export default router;

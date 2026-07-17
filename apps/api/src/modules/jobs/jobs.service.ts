@@ -258,7 +258,7 @@ export class JobsService {
                 // Keyword-based fallback analysis for jobs not yet processed by AI
                 const jobSkillsLower = (job.skills || []).map(s => s.toLowerCase());
                 const jobDescriptionLower = (job.description || '').toLowerCase();
-                const resumeRawTextLower = (resume.parsedData?.rawText || '').toLowerCase();
+                const resumeRawTextLower = (resume?.parsedData?.rawText || '').toLowerCase();
                 const resumeSkillsLower = resumeSkills.map(s => s.toLowerCase());
                 
                 // Find matched skills: skills in resume that appear in job.skills or job description
