@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Plus, Download, Edit3, Trash2 } from "lucide-react";
+import { AIResumeOptimizer } from "@/components/dashboard/AIResumeOptimizer";
 
 export const metadata = { title: "Resumes | ApplyGenie" };
 
@@ -40,10 +41,9 @@ export default function ResumesPage() {
               </div>
             </CardContent>
             <CardFooter className="pt-4 border-t flex justify-between gap-2">
-              <Button variant="ghost" size="sm" className="flex-1">
-                <Edit3 className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
+              <div className="flex-1">
+                <AIResumeOptimizer resumeId={resume.id} resumeName={resume.name || resume.title} />
+              </div>
               <Button variant="ghost" size="icon">
                 <Download className="h-4 w-4" />
               </Button>

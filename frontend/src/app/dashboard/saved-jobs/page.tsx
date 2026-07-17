@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, DollarSign, Building, Bookmark, Trash2 } from "lucide-react";
+import { AICoverLetterGenerator } from "@/components/dashboard/AICoverLetterGenerator";
 
 export const metadata = { title: "Saved Jobs | ApplyGenie" };
 
@@ -53,11 +54,14 @@ export default function SavedJobsPage() {
                   {job.salary}
                 </div>
               </CardContent>
-              <CardFooter className="pt-4 border-t gap-2">
-                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+              <CardFooter className="pt-4 border-t gap-2 flex-col sm:flex-row">
+                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10 sm:w-auto w-full">
                   <Trash2 className="h-4 w-4" />
                 </Button>
-                <Button className="flex-1">Apply Now</Button>
+                <div className="flex-1 w-full">
+                  <AICoverLetterGenerator jobTitle={job.title} companyName={job.company} buttonVariant="secondary" />
+                </div>
+                <Button className="flex-1 w-full sm:w-auto">Apply Now</Button>
               </CardFooter>
             </Card>
           ))}

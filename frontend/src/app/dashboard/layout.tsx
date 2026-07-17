@@ -43,12 +43,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="text-muted-foreground relative">
+            {/* <Button variant="ghost" size="icon" className="text-muted-foreground relative">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span>
-            </Button>
+            </Button> */}
             <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-accent shadow-inner border border-border flex items-center justify-center text-primary-foreground font-bold text-xs">
-              JL
+              SK
             </div>
           </div>
         </header>
