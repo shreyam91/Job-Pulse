@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, FileText, Briefcase, Bot, LayoutDashboard, CheckCircle2, Star, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background selection:bg-primary/20">
@@ -378,22 +378,24 @@ export default function Home() {
               <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Frequently Asked Questions</h2>
             </div>
 
-            <div className="space-y-6">
-              {[
-                { q: "How does the AI Resume Builder work?", a: "You simply upload your existing resume in PDF or DOCX format. Our engine parses the structure, extracts your skills and experience, and stores it. When you find a job you like, the AI cross-references the job description with your profile to generate an ATS-optimized resume emphasizing your most relevant qualifications." },
-                { q: "Can I edit the generated cover letters?", a: "Absolutely. We believe AI should be a co-pilot, not autopilot. You always have full control to edit, tweak, and perfect the generated content before you submit anything." },
-                { q: "Is my data private and secure?", a: "Yes. Your data is encrypted at rest and in transit. We never sell your personal information or use your resumes to train third-party models without your explicit consent." },
-                { q: "Can I cancel my subscription anytime?", a: "Yes, you can cancel your Pro subscription at any time right from your billing dashboard. You will retain access to Pro features until the end of your billing cycle." }
-              ].map((faq, i) => (
-                <div key={i} className="bg-background rounded-2xl p-6 border border-border/50">
-                  <h3 className="font-bold text-lg mb-3 flex items-center justify-between">
-                    {faq.q}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {faq.a}
-                  </p>
-                </div>
-              ))}
+            <div className="mx-auto max-w-2xl">
+              <Accordion>
+                {[
+                  { q: "How does the AI Resume Builder work?", a: "You simply upload your existing resume in PDF or DOCX format. Our engine parses the structure, extracts your skills and experience, and stores it. When you find a job you like, the AI cross-references the job description with your profile to generate an ATS-optimized resume emphasizing your most relevant qualifications." },
+                  { q: "Can I edit the generated cover letters?", a: "Absolutely. We believe AI should be a co-pilot, not autopilot. You always have full control to edit, tweak, and perfect the generated content before you submit anything." },
+                  { q: "Is my data private and secure?", a: "Yes. Your data is encrypted at rest and in transit. We never sell your personal information or use your resumes to train third-party models without your explicit consent." },
+                  { q: "Can I cancel my subscription anytime?", a: "Yes, you can cancel your Pro subscription at any time right from your billing dashboard. You will retain access to Pro features until the end of your billing cycle." }
+                ].map((faq, i) => (
+                  <AccordionItem key={i} value={`faq-${i}`} className="bg-background rounded-2xl border border-border/50 mb-4 px-6 overflow-hidden">
+                    <AccordionTrigger className="text-lg font-bold hover:no-underline py-6">
+                      {faq.q}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground leading-relaxed text-base pb-6">
+                      {faq.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
           </div>
         </section>
@@ -460,7 +462,7 @@ export default function Home() {
               {/* <Link href="#" className="hover:text-foreground transition-colors">Twitter</Link>
               <Link href="#" className="hover:text-foreground transition-colors">LinkedIn</Link>
               <Link href="#" className="hover:text-foreground transition-colors">GitHub</Link> */}
-              <p>Built for modern job seekers.</p>
+              <p>Made for modern Job Seekers.</p>
             </div>
           </div>
         </div>

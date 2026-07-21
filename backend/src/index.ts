@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import applicationsRouter from './routes/applications';
 import aiRouter from './routes/ai';
 import jobsRouter from './routes/jobs';
+import { initCleanupWorker } from './workers/cleanup';
 
 dotenv.config();
 
@@ -25,4 +26,7 @@ app.get('/api/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  
+  // Initialize background workers
+  initCleanupWorker();
 });

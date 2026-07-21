@@ -1,3 +1,5 @@
+import { ArrowLeft, Link } from "lucide-react";
+
 export const metadata = {
   title: "Privacy Policy | ApplyGenie",
   description: "Privacy Policy for ApplyGenie.",
@@ -6,7 +8,15 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 sm:py-24">
+      {/* <header className="border-b border-border/40 bg-background/80 backdrop-blur-md">
+              <div className="container mx-auto flex h-16 items-center px-6">
+                <Link href="/" className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+                </Link>
+              </div>
+            </header> */}
+            
+      <div className="max-w-4xl mx-auto px-4 py-10 sm:px-6 sm:py-16">
         <h1 className="text-4xl font-extrabold tracking-tight text-foreground font-heading mb-4">Privacy Policy</h1>
         <p className="text-muted-foreground mb-8">Last Updated: July 17, 2026</p>
         

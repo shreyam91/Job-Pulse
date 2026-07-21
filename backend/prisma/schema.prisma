@@ -3,35 +3,35 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String    @id @default(uuid())
-  clerkId       String?   @unique // Integration with Clerk
-  email         String    @unique
-  name          String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  clerkId   String?  @unique // Integration with Clerk
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  profile       Profile?
-  resumes       Resume[]
-  coverLetters  CoverLetter[]
-  applications  Application[]
-  savedJobs     SavedJob[]
-  messages      Message[]
-  subscription  Subscription?
+  profile      Profile?
+  resumes      Resume[]
+  coverLetters CoverLetter[]
+  applications Application[]
+  savedJobs    SavedJob[]
+  messages     Message[]
+  subscription Subscription?
 }
 
 model Profile {
-  id              String   @id @default(uuid())
-  userId          String   @unique
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @unique @db.ObjectId
   location        String?
   experienceLevel String?
   preferredRoles  String? // Stored as JSON string
   expectedSalary  String?
-  workPreference  String?  // Remote, Hybrid, Onsite
+  workPreference  String? // Remote, Hybrid, Onsite
   industries      String? // Stored as JSON string
   linkedinUrl     String?
   githubUrl       String?
@@ -39,123 +39,150 @@ model Profile {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skills          Skill[]
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillIds String[] @db.ObjectId
+  skills   Skill[]  @relation(fields: [skillIds], references: [id])
 }
 
 model Skill {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  profiles  Profile[]
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String    @unique
+  profileIds String[]  @db.ObjectId
+  profiles   Profile[] @relation(fields: [profileIds], references: [id])
 }
 
 model Resume {
-  id          String   @id @default(uuid())
-  userId      String
-  name        String   // e.g. "Software Engineer Resume"
-  baseContent String?    // Structured JSON of the resume
-  fileUrl     String?  // PDF/Docx URL
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  name        String // e.g. "Software Engineer Resume"
+  baseContent String? // Structured JSON of the resume
+  rawText     String? // NEW
+  parsedData  String? // NEW (Stored as JSON string)
+  fileUrl     String? // PDF/Docx URL
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   versions    ResumeVersion[]
+  atsAnalyses AtsAnalysis[] // NEW
 }
 
 model ResumeVersion {
-  id             String   @id @default(uuid())
-  resumeId       String
-  versionName    String   // e.g. "ATS Optimized", "Executive"
-  content        String     // Optimized content
-  createdAt      DateTime @default(now())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  resumeId    String   @db.ObjectId
+  versionName String // e.g. "ATS Optimized", "Executive"
+  content     String // Optimized content
+  createdAt   DateTime @default(now())
 
-  resume         Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 }
 
 model CoverLetter {
-  id          String   @id @default(uuid())
-  userId      String
-  jobId       String?  // Can optionally be linked to a Job
-  content     String   // The text of the cover letter
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  jobId     String?  @db.ObjectId
+  content   String // The text of the cover letter
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  job         Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
 }
 
 model Company {
-  id          String   @id @default(uuid())
-  name        String
-  logoUrl     String?
-  website     String?
-  jobs        Job[]
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  logoUrl String?
+  website String?
+  jobs    Job[]
 }
 
 model Job {
-  id               String   @id @default(uuid())
-  companyId        String
-  title            String
-  description      String?
-  location         String?
-  workPreference   String?  // Remote, Hybrid, Onsite
-  salaryRange      String?
-  requirements     String? // Stored as JSON string
-  url              String?  // Link to original posting
-  createdAt        DateTime @default(now())
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  companyId      String   @db.ObjectId
+  title          String
+  description    String?
+  location       String?
+  workPreference String? // Remote, Hybrid, Onsite
+  salaryRange    String?
+  requirements   String? // Stored as JSON string
+  url            String? // Link to original posting
+  createdAt      DateTime @default(now())
 
-  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  applications     Application[]
-  savedJobs        SavedJob[]
-  coverLetters     CoverLetter[]
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applications Application[]
+  savedJobs    SavedJob[]
+  coverLetters CoverLetter[]
+  atsAnalyses  AtsAnalysis[] // NEW
 }
 
 model Application {
-  id              String   @id @default(uuid())
-  userId          String
-  jobId           String
-  status          String   @default("Saved") // Saved, Applied, Interview, Assessment, Offer, Rejected
-  notes           String?
-  appliedAt       DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    @db.ObjectId
+  jobId     String    @db.ObjectId
+  status    String    @default("Saved") // Saved, Applied, Interview, Assessment, Offer, Rejected
+  notes     String?
+  appliedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  job             Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }
 
 model SavedJob {
-  id              String   @id @default(uuid())
-  userId          String
-  jobId           String
-  matchScore      Float?   // AI calculated match score
-  createdAt       DateTime @default(now())
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  jobId      String   @db.ObjectId
+  matchScore Float? // AI calculated match score
+  createdAt  DateTime @default(now())
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  job             Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@unique([userId, jobId])
 }
 
 model Message {
-  id        String   @id @default(uuid())
-  userId    String
-  role      String   // "user" or "assistant"
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  role      String // "user" or "assistant"
   content   String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {
-  id               String   @id @default(uuid())
-  userId           String   @unique
-  stripeCustomerId String?  @unique
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @unique @db.ObjectId
+  stripeCustomerId String?   @unique
   planId           String?
-  status           String   @default("inactive")
+  status           String    @default("inactive")
   currentPeriodEnd DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AtsAnalysis {
+  id                      String   @id @default(auto()) @map("_id") @db.ObjectId
+  resumeId                String   @db.ObjectId
+  jobId                   String   @db.ObjectId
+  overallScore            Float
+  skillMatchScore         Float
+  semanticSimilarityScore Float
+  experienceMatchScore    Float
+  keywordCoverageScore    Float
+  formattingScore         Float
+  educationScore          Float
+  aiExplanation           String?
+  tailoredBullets         String? // Stored as JSON string
+  coldEmailDraft          String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }

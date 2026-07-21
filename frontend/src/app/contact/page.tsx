@@ -13,12 +13,12 @@ export default function ContactPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-24 max-w-5xl">
+      <main className="container mx-auto px-6 py-10 max-w-5xl">
         <div className="grid md:grid-cols-2 gap-16">
           <div>
             <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Get in touch</h1>
             <p className="text-xl text-muted-foreground mb-12 font-medium">
-              Have questions about our Pro plan or want to request a feature? We'd love to hear from you.
+              Have questions about our Pro plan or want to request a feature? We&apos;d love to hear from you.
             </p>
 
             <div className="space-y-8">
@@ -39,7 +39,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">Support</h3>
-                  <p className="text-muted-foreground mb-1">We're available via in-app chat.</p>
+                  <p className="text-muted-foreground mb-1">We&apos;re available via in-app chat.</p>
                   <a href="#" className="text-primary font-medium hover:underline">Visit Support Center</a>
                 </div>
               </div>
@@ -76,7 +76,7 @@ export default function ContactPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Message</label>
-                <textarea className="w-full p-3 rounded-md bg-background border border-input text-sm outline-none focus:ring-2 focus:ring-ring min-h-[120px] resize-y" placeholder="How can we help?"></textarea>
+                <textarea className="w-full p-3 rounded-md bg-background border border-input text-sm outline-none focus:ring-2 focus:ring-ring min-h-30 resize-y" placeholder="How can we help?"></textarea>
               </div>
               <Button type="button" className="w-full h-12 text-base font-semibold mt-2">Send Message</Button>
             </form>
