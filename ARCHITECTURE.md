@@ -6,11 +6,11 @@ This document outlines the architecture of the project, detailing the components
 ## Components
 1. **Frontend**  
    - Technology: React.js  
-   - Description: The user interface of the application, built using React for a dynamic and responsive experience.
+   - Description: The user interface of the application, built using React.js for a responsive and dynamic user experience.
 
 2. **Backend**  
    - Technology: Node.js with Express  
-   - Description: The server-side application that handles business logic and API requests.
+   - Description: The server-side application that handles API requests and business logic.
 
 3. **Database**  
    - Technology: PostgreSQL  
@@ -18,26 +18,25 @@ This document outlines the architecture of the project, detailing the components
 
 4. **Authentication**  
    - Technology: JWT (JSON Web Tokens)  
-   - Description: Used for securing API endpoints and managing user sessions.
+   - Description: Used for secure user authentication and authorization.
 
 5. **Deployment**  
    - Technology: Docker  
-   - Description: Containerization of the application to ensure consistency across environments.
+   - Description: Containerization of the application for consistent deployment across environments.
 
 ## Architecture Diagram
 ![Architecture Diagram](link-to-diagram)
 
-## Interaction Flow
-1. The user interacts with the frontend, which sends requests to the backend.
-2. The backend processes the requests, interacts with the database if necessary, and sends responses back to the frontend.
-3. Authentication is handled via JWT, ensuring secure communication.
+## Communication
+- The frontend communicates with the backend via RESTful APIs.
+- The backend interacts with the PostgreSQL database using an ORM (e.g., Sequelize).
 
-## Technologies Stack
-- **Frontend:** React.js  
-- **Backend:** Node.js, Express  
-- **Database:** PostgreSQL  
-- **Authentication:** JWT  
-- **Containerization:** Docker  
+## Scalability
+- The application is designed to be horizontally scalable by deploying multiple instances of the backend service behind a load balancer.
+
+## Security
+- All API endpoints are secured using JWT for authentication.
+- Sensitive data is encrypted in the database.
 
 ## Conclusion
-This architecture provides a scalable and maintainable structure for the project, leveraging modern technologies to deliver a robust application.
+This architecture provides a robust foundation for the application, ensuring scalability, security, and maintainability.
