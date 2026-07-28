@@ -1,39 +1,41 @@
 # Project Architecture
 
 ## Overview
-This document outlines the architecture for the project, detailing the components, their interactions, and the technologies used.
+This document outlines the architecture of the project, detailing the components, technologies, and design decisions made to ensure a robust and scalable system.
 
-## Components
-1. **Frontend**  
-   - Technology: React.js  
-   - Description: The user interface of the application, responsible for rendering views and handling user interactions.
+## System Components
+- **Frontend**: A web-based user interface built using React.js.
+- **Backend**: A RESTful API developed with Node.js and Express.
+- **Database**: A PostgreSQL database for data storage.
+- **Caching Layer**: Redis for caching frequently accessed data.
+- **Message Broker**: RabbitMQ for handling asynchronous tasks.
 
-2. **Backend**  
-   - Technology: Node.js with Express  
-   - Description: The server-side application that handles business logic, processes requests, and interacts with the database.
+## Architectural Style
+The project follows a microservices architecture, allowing for independent deployment and scaling of services. Each service communicates over HTTP/REST and uses a message broker for asynchronous communication.
 
-3. **Database**  
-   - Technology: PostgreSQL  
-   - Description: The relational database used to store application data.
-
-4. **API**  
-   - Description: RESTful API that facilitates communication between the frontend and backend.
-
-5. **Infrastructure**  
-   - Technology: AWS  
-   - Description: Cloud services used for hosting the application, including EC2 for servers and RDS for the database.
-
-## Architecture Diagram
-![Architecture Diagram](link-to-diagram)
+## Technology Stack
+- **Frontend**: React.js, Redux, Axios
+- **Backend**: Node.js, Express, Sequelize (for ORM)
+- **Database**: PostgreSQL
+- **Caching**: Redis
+- **Message Broker**: RabbitMQ
+- **Containerization**: Docker for container management
+- **Orchestration**: Kubernetes for managing containerized applications
 
 ## Deployment
-- Continuous Integration/Continuous Deployment (CI/CD) using GitHub Actions.
+The application is deployed on a cloud platform (AWS) using Kubernetes for orchestration. CI/CD pipelines are set up using GitHub Actions to automate testing and deployment processes.
 
-## Security
-- JWT for authentication and authorization.
+## Security Considerations
+- Use of HTTPS for secure communication.
+- JWT for user authentication and authorization.
+- Regular security audits and dependency checks.
 
 ## Scalability
-- Load balancers and auto-scaling groups in AWS to handle increased traffic.
+The architecture is designed to scale horizontally. Each microservice can be scaled independently based on load, and the database can be partitioned as needed.
+
+## Monitoring and Logging
+- Use of Prometheus for monitoring service health and performance.
+- ELK stack (Elasticsearch, Logstash, Kibana) for logging and visualization.
 
 ## Conclusion
-This architecture provides a robust foundation for the project, ensuring scalability, maintainability, and security.
+This architecture provides a solid foundation for building a scalable and maintainable application, leveraging modern technologies and best practices.
