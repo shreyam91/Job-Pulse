@@ -1,41 +1,29 @@
 # Project Architecture
 
 ## Overview
-This document outlines the architecture of the project, detailing the components, technologies, and design decisions made to ensure a robust and scalable system.
+This document outlines the architecture of the project, detailing the components, their interactions, and the rationale behind key architectural decisions.
 
-## System Components
-- **Frontend**: A web-based user interface built using React.js.
+## Components
+- **Frontend**: A web-based user interface built using React.
 - **Backend**: A RESTful API developed with Node.js and Express.
 - **Database**: A PostgreSQL database for data storage.
-- **Caching Layer**: Redis for caching frequently accessed data.
-- **Message Broker**: RabbitMQ for handling asynchronous tasks.
+- **Infrastructure**: Deployed on AWS using EC2 instances and RDS for database management.
 
-## Architectural Style
-The project follows a microservices architecture, allowing for independent deployment and scaling of services. Each service communicates over HTTP/REST and uses a message broker for asynchronous communication.
+## Architectural Decisions
 
-## Technology Stack
-- **Frontend**: React.js, Redux, Axios
-- **Backend**: Node.js, Express, Sequelize (for ORM)
-- **Database**: PostgreSQL
-- **Caching**: Redis
-- **Message Broker**: RabbitMQ
-- **Containerization**: Docker for container management
-- **Orchestration**: Kubernetes for managing containerized applications
+### 1. Choice of Technology Stack
+- **Frontend**: React was chosen for its component-based architecture and strong community support.
+- **Backend**: Node.js and Express were selected for their non-blocking I/O capabilities, which are beneficial for handling multiple requests.
+- **Database**: PostgreSQL was chosen for its robustness, support for complex queries, and ACID compliance.
 
-## Deployment
-The application is deployed on a cloud platform (AWS) using Kubernetes for orchestration. CI/CD pipelines are set up using GitHub Actions to automate testing and deployment processes.
+### 2. Deployment Strategy
+- The application will be deployed on AWS to leverage its scalability and reliability. EC2 instances will host the backend, while RDS will manage the PostgreSQL database.
 
-## Security Considerations
-- Use of HTTPS for secure communication.
-- JWT for user authentication and authorization.
-- Regular security audits and dependency checks.
+### 3. API Design
+- A RESTful API design was chosen to ensure stateless interactions and to provide a clear separation between the frontend and backend.
 
-## Scalability
-The architecture is designed to scale horizontally. Each microservice can be scaled independently based on load, and the database can be partitioned as needed.
-
-## Monitoring and Logging
-- Use of Prometheus for monitoring service health and performance.
-- ELK stack (Elasticsearch, Logstash, Kibana) for logging and visualization.
+### 4. Data Management
+- PostgreSQL will be used for data storage due to its advanced features like indexing and transaction management, which are essential for the application’s performance and reliability.
 
 ## Conclusion
-This architecture provides a solid foundation for building a scalable and maintainable application, leveraging modern technologies and best practices.
+This architecture is designed to ensure scalability, maintainability, and performance, aligning with the project’s goals and requirements.
