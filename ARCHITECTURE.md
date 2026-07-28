@@ -1,42 +1,39 @@
 # Project Architecture
 
 ## Overview
-This document outlines the architecture of the project, detailing the components, their interactions, and the technologies used.
+This document outlines the architecture for the project, detailing the components, their interactions, and the technologies used.
 
 ## Components
 1. **Frontend**  
    - Technology: React.js  
-   - Description: The user interface of the application, built using React.js for a responsive and dynamic user experience.
+   - Description: The user interface of the application, responsible for rendering views and handling user interactions.
 
 2. **Backend**  
    - Technology: Node.js with Express  
-   - Description: The server-side application that handles API requests and business logic.
+   - Description: The server-side application that handles business logic, processes requests, and interacts with the database.
 
 3. **Database**  
    - Technology: PostgreSQL  
-   - Description: A relational database used for storing application data.
+   - Description: The relational database used to store application data.
 
-4. **Authentication**  
-   - Technology: JWT (JSON Web Tokens)  
-   - Description: Used for secure user authentication and authorization.
+4. **API**  
+   - Description: RESTful API that facilitates communication between the frontend and backend.
 
-5. **Deployment**  
-   - Technology: Docker  
-   - Description: Containerization of the application for consistent deployment across environments.
+5. **Infrastructure**  
+   - Technology: AWS  
+   - Description: Cloud services used for hosting the application, including EC2 for servers and RDS for the database.
 
 ## Architecture Diagram
 ![Architecture Diagram](link-to-diagram)
 
-## Communication
-- The frontend communicates with the backend via RESTful APIs.
-- The backend interacts with the PostgreSQL database using an ORM (e.g., Sequelize).
-
-## Scalability
-- The application is designed to be horizontally scalable by deploying multiple instances of the backend service behind a load balancer.
+## Deployment
+- Continuous Integration/Continuous Deployment (CI/CD) using GitHub Actions.
 
 ## Security
-- All API endpoints are secured using JWT for authentication.
-- Sensitive data is encrypted in the database.
+- JWT for authentication and authorization.
+
+## Scalability
+- Load balancers and auto-scaling groups in AWS to handle increased traffic.
 
 ## Conclusion
-This architecture provides a robust foundation for the application, ensuring scalability, security, and maintainability.
+This architecture provides a robust foundation for the project, ensuring scalability, maintainability, and security.
